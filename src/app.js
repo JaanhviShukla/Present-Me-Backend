@@ -6,11 +6,14 @@ const cookieParsrer = require("cookie-parser");
 
 const router = require("./routes/auth");
 
+const dashboardrouter = require("./routes/dashboard");
+
 const app = express();
 app.use(express.json()); // or express.json()
 app.use(cookieParsrer());
 
 app.use("/", router);
+app.use("/", dashboardrouter);
 
 // Mount routes
 // app.use('/api/institutions', institutionRoutes);
