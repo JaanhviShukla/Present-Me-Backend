@@ -1,5 +1,5 @@
 const express = require("express");
-const router = express.Router();
+const authRouter = express.Router();
 const Joi = require("joi");
 const institutionService = require("../services/institutionService");
 const multer = require("multer");
@@ -19,7 +19,7 @@ const signupSchema = Joi.object({
   Role: Joi.string().valid("Dean", "HOD").required(),
 });
 // Signup route
-router.post("/signup", upload.single("document"), async (req, res) => {
+authRouter.post("/signup", upload.single("document"), async (req, res) => {
   try {
     const { error, value } = signupSchema.validate(req.body);
     if (error) {
@@ -47,11 +47,15 @@ router.post("/signup", upload.single("document"), async (req, res) => {
     //   documentUrl = await uploadToS3(req.file.buffer, req.file.originalname, req.file.mimetype);
     // }
 
-    const documentUrl = await uploadToS3(
-      req.file.buffer,
-      req.file.originalname,
-      req.file.mimetype
-    );
+    // Upload document to S3 only if a file is provided
+    let documentUrl = null;
+    if (req.file) {
+      documentUrl = await uploadToS3(
+        req.file.buffer,
+        req.file.originalname,
+        req.file.mimetype
+      );
+    }
 
     const newInstitution = await institutionService.createInstitution({
       firstName,
@@ -78,7 +82,7 @@ router.post("/signup", upload.single("document"), async (req, res) => {
   }
 });
 
-router.post("/login", async (req, res) => {
+authRouter.post("/login", async (req, res) => {
   try {
     const { emailId, password } = req.body;
 
@@ -90,11 +94,11 @@ router.post("/login", async (req, res) => {
     }
 
     // Find institution by email
-    const institution = await institutionService.findByEmail(emailId); 
+    const institution = await institutionService.findByEmail(emailId);
     //console.log("Institution found:", institution);
     if (!institution) {
       return res.status(404).json({ message: "Institution not found" });
-    } 
+    }
 
     //compare password
     const isMatch = await bcrypt.compare(password, institution.passwordHash);
@@ -104,11 +108,7 @@ router.post("/login", async (req, res) => {
 
     //create JWT token    cccheckkk
     const token = jwt.sign(
-      {
-        id: institution.institutionId,
-        email: institution.emailId,
-        role: institution.Role,
-      },
+      { id: institution.institutionId },
       process.env.JWT_SECRET,
       { expiresIn: "2d" }
     );
@@ -140,4 +140,4 @@ router.post("/login", async (req, res) => {
   }
 });
 
-module.exports = router;
+module.exports = authRouter;

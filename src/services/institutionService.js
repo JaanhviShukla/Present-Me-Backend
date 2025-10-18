@@ -1,6 +1,6 @@
 /// this will check duplicate email and create an institution
 
-const {ScanCommand,PutCommand,QueryCommand}= require("@aws-sdk/lib-dynamodb");
+const {ScanCommand,PutCommand,QueryCommand, GetCommand}= require("@aws-sdk/lib-dynamodb");
 const{docClient}= require('../dynamoDb');
 const {v4:uuidv4}= require('uuid');
 const bcrypt = require("bcrypt");
@@ -62,4 +62,15 @@ async function createInstitution({firstName,lastName,emailId,phone,InstitutionNa
   const {passwordHash:_,...itemWithoutPasswordHash}=item;
   return itemWithoutPasswordHash;
 }
-module.exports={createInstitution,findByEmail};
+
+// Find institution by primary key (institutionId)
+async function findById(institutionId){
+  const cmd = new GetCommand({
+    TableName: TABLE_NAME,
+    Key: { institutionId },
+  });
+  const res = await docClient.send(cmd);
+  return res.Item || null;
+}
+
+module.exports={createInstitution,findByEmail, findById};

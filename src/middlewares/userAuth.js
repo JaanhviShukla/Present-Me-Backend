@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
+const { findById } = require("../services/institutionService");
 
-const userAuth = (req, res, next) => {
+const userAuth = async (req, res, next) => {
   try {
     //get token from cookie or AUTHORIZATION OF HEADER
     const token =
@@ -15,7 +16,18 @@ const userAuth = (req, res, next) => {
 
     //VERIFY TOKEN
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; //attach user info to request object
+    const { id } = decoded || {};
+
+    if (!id) {
+      return res.status(401).json({ message: "Invalid token payload" });
+    }
+
+    // Load full user by id
+    const user = await findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    req.user = user; //attach user info to request object
     next(); //proceed to next middleware or route handler
   } catch (err) {
     console.error("Auth error : ", err);

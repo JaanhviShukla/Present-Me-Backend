@@ -2,17 +2,16 @@
 require("dotenv").config(); // ensure .env is loaded
 const express = require("express");
 const bodyParser = require("body-parser");
-const cookieParsrer = require("cookie-parser");
+const cookieParser = require("cookie-parser");
 
-const router = require("./routes/auth");
-
+const authRouter = require("./routes/auth");
 const dashboardrouter = require("./routes/dashboard");
 
 const app = express();
 app.use(express.json()); // or express.json()
-app.use(cookieParsrer());
+app.use(cookieParser());
 
-app.use("/", router);
+app.use("/", authRouter);
 app.use("/", dashboardrouter);
 
 // Mount routes
@@ -23,4 +22,4 @@ app.get("/", (req, res) => res.send("PresentMe back running"));
 
 // Start server
 const PORT = process.env.PORT || 3000;
-app.listen(3000, () => console.log(`Server listening on 3000`));
+app.listen(PORT, () => console.log(`Server listening on ${PORT}`));
