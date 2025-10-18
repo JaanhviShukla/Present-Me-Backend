@@ -23,11 +23,13 @@ const userAuth = async (req, res, next) => {
     }
 
     // Load full user by id
-    const user = await findById(id);
-    if (!user) {
+    const inst_id = await findById(id);
+    console.log("Authenticated user:", inst_id);
+    if (!inst_id) {
       return res.status(404).json({ message: "User not found" });
     }
-    req.user = user; //attach user info to request object
+
+    req.inst_id = inst_id; //attach user info to request object
     next(); //proceed to next middleware or route handler
   } catch (err) {
     console.error("Auth error : ", err);

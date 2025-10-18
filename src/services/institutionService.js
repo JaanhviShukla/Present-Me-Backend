@@ -73,4 +73,4 @@ async function findById(institutionId){
   return res.Item || null;
 }
 
-module.exports={createInstitution,findByEmail, findById};
+module.exports={createInstitution, findByEmail, findById};

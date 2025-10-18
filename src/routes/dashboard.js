@@ -6,11 +6,8 @@ const userAuth = require("../middlewares/userAuth");
 
 
 dashboardrouter.get("/dashboard", userAuth, (req, res) => {
-  console.log("User in dashboard route:", req.user);
-
-  res.json({ message: `Welcome to the dashboard, ${req.user.firstName}` });
-
-
+  console.log(req.inst_id);
+  res.json({ message: `Welcome to the dashboard, ${req.inst_id.firstName}` });
 });
 
 module.exports = dashboardrouter;
