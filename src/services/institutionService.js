@@ -1,13 +1,17 @@
 /// this will check duplicate email and create an institution
 
-const {ScanCommand,PutCommand,QueryCommand, GetCommand}= require("@aws-sdk/lib-dynamodb");
+const {ScanCommand,PutCommand,QueryCommand, GetCommand,UpdateCommand}= require("@aws-sdk/lib-dynamodb");
 const{docClient}= require('../dynamoDb');
 const {v4:uuidv4}= require('uuid');
 const bcrypt = require("bcrypt");
 
+
 const SALT_ROUNDS=10;
 const TABLE_NAME="Institutions";
 const EMAIL_INDEX="EmailIndex";
+
+// Validation schema
+
 
 async function findByEmail(emailId){
   //query the gsi to see if email already exists
@@ -22,7 +26,8 @@ async function findByEmail(emailId){
   return (res.Items && res.Items.length>0)? res.Items[0]:null;
 }
 
-async function createInstitution({firstName,lastName,emailId,phone,InstitutionName,Role,password,documentUrl}){
+async function createInstitution({firstName,lastName,emailId,phone,InstitutionName,Role,password,aadharUrl,
+  designationIDUrl}){
   //lowercase email to ensure uniqueness
   const normalizedEmail=emailId.toLowerCase();
   //1) check duplicate
@@ -47,7 +52,10 @@ async function createInstitution({firstName,lastName,emailId,phone,InstitutionNa
     emailId:normalizedEmail,
     phone,
     passwordHash,
-    documentUrl: documentUrl || null,
+    aadharUrl: aadharUrl || null,              
+    designationIDUrl: designationIDUrl || null, 
+    status: "pending",
+    type: "institute",
     createdAt: new Date().toISOString()
   };
 
@@ -73,4 +81,35 @@ async function findById(institutionId){
   return res.Item || null;
 }
 
-module.exports={createInstitution, findByEmail, findById};
+// Get all institutions
+async function getAllInstitutions() {
+  const cmd = new ScanCommand({
+    TableName: TABLE_NAME,
+  });
+  const res = await docClient.send(cmd);
+  return res.Items || [];
+}
+
+
+// Update institution status
+async function updateInstitutionStatus(institutionId, newStatus) {
+  const validStatuses = ["pending", "verified", "rejected"];
+
+  if (!validStatuses.includes(newStatus)) {
+    throw new Error("Invalid status value. Must be 'pending', 'verified', or 'rejected'.");
+  }
+
+  const cmd = new UpdateCommand({
+    TableName: TABLE_NAME,
+    Key: { institutionId },
+    UpdateExpression: "SET #s = :s",
+    ExpressionAttributeNames: { "#s": "status" },
+    ExpressionAttributeValues: { ":s": newStatus },
+    ReturnValues: "ALL_NEW",
+  });
+  
+  const res = await docClient.send(cmd);
+  return res.Attributes;
+}
+
+module.exports={createInstitution, findByEmail, findById, getAllInstitutions, updateInstitutionStatus};

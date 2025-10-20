@@ -1,87 +1,98 @@
 const express = require("express");
 const authRouter = express.Router();
-const Joi = require("joi");
+const validateInstitutionSchema = require("../middlewares/validation");
 const institutionService = require("../services/institutionService");
 const multer = require("multer");
-const upload = multer({ storage: multer.memoryStorage() }); // Store files in memory for processing
 const { uploadToS3 } = require("../S3");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 
-// Validation schema
-const signupSchema = Joi.object({
-  firstName: Joi.string().min(2).max(30).required(),
-  lastName: Joi.string().min(2).max(30).required(),
-  emailId: Joi.string().email().required(),
-  phone: Joi.string().required(),
-  password: Joi.string().min(6).max(128).required(),
-  InstitutionName: Joi.string().min(2).max(100).required(),
-  Role: Joi.string().valid("Dean", "HOD").required(),
-});
+
+const upload = multer({ storage: multer.memoryStorage() });  // Store files in memory for processing
+
 // Signup route
-authRouter.post("/signup", upload.single("document"), async (req, res) => {
-  try {
-    const { error, value } = signupSchema.validate(req.body);
-    if (error) {
-      return res.status(400).json({ message: error.details[0].message });
+authRouter.post(
+  "/signup",
+  upload.fields([
+    { name: "aadhar", maxCount: 1 },
+    { name: "designationID", maxCount: 1 },
+  ]),
+  async (req, res) => {
+    try {
+      const { error, value } = validateInstitutionSchema.validate(req.body);
+      if (error) {
+        return res.status(400).json({ message: error.details[0].message });
+      }
+      const {
+        firstName,
+        lastName,
+        emailId,
+        phone,
+        password,
+        InstitutionName,
+        Role,
+      } = value;
+
+      // Check for duplicate email BEFORE uploading files to S3
+      const existingInstitution = await institutionService.findByEmail(emailId);
+      if (existingInstitution) {
+        return res.status(409).json({ message: "Email already exists" });
+      }
+      
+      const files = req.files;
+      let aadharUrl = null;
+      let designationIDUrl = null;
+     
+       // Upload Aadhar
+      if (files.aadhar?.[0]) {
+        const file = files.aadhar[0];
+        aadharUrl = await uploadToS3(
+          file.buffer,
+          file.originalname,
+          file.mimetype
+        );
+      }
+
+      // Upload Designation ID
+      if (files.designationID?.[0]) {
+        const file = files.designationID[0];
+        designationIDUrl = await uploadToS3(
+          file.buffer,
+          file.originalname,
+          file.mimetype
+        );
+      }
+
+
+      const newInstitution = await institutionService.createInstitution({
+        firstName,
+        lastName,
+        emailId,
+        phone,
+        password,
+        InstitutionName,
+        Role,
+        aadharUrl,
+        designationIDUrl,
+      });
+      res.status(201).json({
+        message: "Institution created successfully",
+        institution: newInstitution,
+      });
+    } catch (err) {
+      if (err.code === "DUPLICATE_EMAIL") {
+        return res.status(409).json({ message: err.message });
+      }
+      console.error("Error in /signup:", err);
+      res
+        .status(500)
+        .json({ message: "Internal server error", error: err.message });
     }
-    const {
-      firstName,
-      lastName,
-      emailId,
-      phone,
-      password,
-      InstitutionName,
-      Role,
-    } = value;
-
-    //upload document if provided
-    // let documentUrl = null;
-    // if (req.file) {
-    //   documentUrl = await uploadToS3(req.file.buffer, req.file.originalname, req.file.mimetype);
-    // }
-
-    // upload document to S3 if file provided
-    // let documentUrl = null;
-    // if (req.file) {
-    //   documentUrl = await uploadToS3(req.file.buffer, req.file.originalname, req.file.mimetype);
-    // }
-
-    // Upload document to S3 only if a file is provided
-    let documentUrl = null;
-    if (req.file) {
-      documentUrl = await uploadToS3(
-        req.file.buffer,
-        req.file.originalname,
-        req.file.mimetype
-      );
-    }
-
-    const newInstitution = await institutionService.createInstitution({
-      firstName,
-      lastName,
-      emailId,
-      phone,
-      password,
-      InstitutionName,
-      Role,
-      documentUrl, // include document URL if uploaded
-    });
-    res.status(201).json({
-      message: "Institution created successfully",
-      institution: newInstitution,
-    });
-  } catch (err) {
-    if (err.code === "DUPLICATE_EMAIL") {
-      return res.status(409).json({ message: err.message });
-    }
-    console.error("Error in /signup:", err);
-    res
-      .status(500)
-      .json({ message: "Internal server error", error: err.message });
   }
-});
+);
 
+
+// Signin route
 authRouter.post("/login", async (req, res) => {
   try {
     const { emailId, password } = req.body;
@@ -123,14 +134,7 @@ authRouter.post("/login", async (req, res) => {
     return res.status(200).json({
       message: "Login successful",
       token, //also send token in response body
-      institution: {
-        id: institution.institutionId,
-        firstName: institution.firstName,
-        lastName: institution.lastName,
-        emailId: institution.emailId,
-        InstitutionName: institution.InstitutionName,
-        Role: institution.Role,
-      },
+      institution,
     });
   } catch (err) {
     console.error("Error in /login:", err);
@@ -138,6 +142,13 @@ authRouter.post("/login", async (req, res) => {
       .status(500)
       .json({ message: "Internal server error", error: err.message });
   }
+});
+
+
+// logout route
+authRouter.post("/logout", (req, res) => {
+  res.clearCookie("token");
+  res.status(200).json({ message: "Logged out successfully" });
 });
 
 module.exports = authRouter;

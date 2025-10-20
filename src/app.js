@@ -6,6 +6,7 @@ const cookieParser = require("cookie-parser");
 
 const authRouter = require("./routes/auth");
 const dashboardrouter = require("./routes/dashboard");
+const sAdminRouter = require("./routes/sAdmin_institute");
 
 const app = express();
 app.use(express.json()); // or express.json()
@@ -13,6 +14,7 @@ app.use(cookieParser());
 
 app.use("/", authRouter);
 app.use("/", dashboardrouter);
+app.use("/", sAdminRouter);
 
 // Mount routes
 // app.use('/api/institutions', institutionRoutes);
