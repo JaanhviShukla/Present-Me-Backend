@@ -4,9 +4,9 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 
-const authRouter = require("./routes/auth");
-const dashboardrouter = require("./routes/dashboard");
-const sAdminRouter = require("./routes/sAdmin_institute");
+const authRouter = require("./routes/admin/auth");
+const dashboardrouter = require("./routes/admin/dashboard");
+const sAdminRouter = require("./routes/sAdmin/sAdmin_institute");
 
 const app = express();
 app.use(express.json()); // or express.json()

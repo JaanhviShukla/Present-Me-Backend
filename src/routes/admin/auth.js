@@ -1,14 +1,13 @@
 const express = require("express");
 const authRouter = express.Router();
-const validateInstitutionSchema = require("../middlewares/validation");
-const institutionService = require("../services/institutionService");
+const validateInstitutionSchema = require("../../middlewares/validation");
+const institutionService = require("../../services/institutionService");
 const multer = require("multer");
-const { uploadToS3 } = require("../S3");
+const { uploadToS3 } = require("../../S3");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 
-
-const upload = multer({ storage: multer.memoryStorage() });  // Store files in memory for processing
+const upload = multer({ storage: multer.memoryStorage() }); // Store files in memory for processing
 
 // Signup route
 authRouter.post(
@@ -38,12 +37,12 @@ authRouter.post(
       if (existingInstitution) {
         return res.status(409).json({ message: "Email already exists" });
       }
-      
+
       const files = req.files;
       let aadharUrl = null;
       let designationIDUrl = null;
-     
-       // Upload Aadhar
+
+      // Upload Aadhar
       if (files.aadhar?.[0]) {
         const file = files.aadhar[0];
         aadharUrl = await uploadToS3(
@@ -62,7 +61,6 @@ authRouter.post(
           file.mimetype
         );
       }
-
 
       const newInstitution = await institutionService.createInstitution({
         firstName,
@@ -90,7 +88,6 @@ authRouter.post(
     }
   }
 );
-
 
 // Signin route
 authRouter.post("/login", async (req, res) => {
@@ -143,7 +140,6 @@ authRouter.post("/login", async (req, res) => {
       .json({ message: "Internal server error", error: err.message });
   }
 });
-
 
 // logout route
 authRouter.post("/logout", (req, res) => {
