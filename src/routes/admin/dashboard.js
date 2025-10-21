@@ -7,6 +7,7 @@ const instituteAuth = require("../../middlewares/instituteAuth");
 dashboardrouter.get("/dashboard", instituteAuth, (req, res) => {
   console.log(req.inst_id);
   res.json({ message: `Welcome to the dashboard, ${req.inst_id.firstName}` });
+  res.send
 });
 
 module.exports = dashboardrouter;

@@ -7,7 +7,7 @@ const validateInstitutionSchema = Joi.object({
   phone: Joi.string().required(),
   password: Joi.string().min(6).max(128).required(),
   InstitutionName: Joi.string().min(2).max(100).required(),
-  Role: Joi.string().valid("Dean", "HOD").required(),
+  Role: Joi.string().valid("Dean", "HOD", "Class Incharge").required(),
 });
 
 module.exports =  validateInstitutionSchema 

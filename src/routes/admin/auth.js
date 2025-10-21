@@ -102,7 +102,7 @@ authRouter.post("/login", async (req, res) => {
     }
 
     // Find institution by email
-    const institution = await institutionService.findByEmail(emailId);
+    const institution = await institutionService.findByEmail(emailId, "Institutions");
     //console.log("Institution found:", institution);
     if (!institution) {
       return res.status(404).json({ message: "Institution not found" });

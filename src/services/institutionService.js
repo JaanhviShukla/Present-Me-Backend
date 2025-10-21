@@ -13,10 +13,10 @@ const EMAIL_INDEX="EmailIndex";
 // Validation schema
 
 
-async function findByEmail(emailId){
+async function findByEmail(emailId, tableName,){
   //query the gsi to see if email already exists
   const cmd= new QueryCommand({
-    TableName:TABLE_NAME,
+    TableName: tableName,
     IndexName:EMAIL_INDEX,
     KeyConditionExpression:"emailId = :e",
     ExpressionAttributeValues:{":e":emailId.toLowerCase()},
@@ -39,7 +39,6 @@ async function createInstitution({firstName,lastName,emailId,phone,InstitutionNa
   }
 
   //hash password
-
   const passwordHash = await bcrypt.hash(password,SALT_ROUNDS);
 
   //3) build item
@@ -91,6 +90,7 @@ async function getAllInstitutions() {
 }
 
 
+
 // Update institution status
 async function updateInstitutionStatus(institutionId, newStatus) {
   const validStatuses = ["pending", "verified", "rejected"];
@@ -107,7 +107,7 @@ async function updateInstitutionStatus(institutionId, newStatus) {
     ExpressionAttributeValues: { ":s": newStatus },
     ReturnValues: "ALL_NEW",
   });
-  
+
   const res = await docClient.send(cmd);
   return res.Attributes;
 }
