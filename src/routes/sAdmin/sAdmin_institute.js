@@ -28,7 +28,7 @@ sAdminRouter.patch(
       const { institutionId } = req.params;
       const { status } = req.body; // e.g., { "status": "verified" }
 
-      const updated = await updateInstitutionStatus(institutionId, status);
+      const updated = await updateInstitutionStatus(institutionId, status,"Institutions","institutionId");
       res.status(200).json({
         success: true,
         message: `Institution status updated to '${status}'`,
