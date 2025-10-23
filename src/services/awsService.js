@@ -71,16 +71,13 @@ async function createInstitution({firstName,lastName,emailId,phone,InstitutionNa
 }
 
 
-
-// Find institution by primary key (institutionId)
-async function findById(institutionId, tableName=TABLE_NAME) {
+async function findById(id, tableName=TABLE_NAME, keyName) {
   const cmd = new GetCommand({
     TableName: tableName,
-    Key: { institutionId },
+    Key: { [keyName]: id },
   });
-  const institutionRes = await docClient.send(cmd);
-  const institution = institutionRes.Item|| null;
-  return institution;
+  const res = await docClient.send(cmd);
+  return res.Item || null;
 }
 
 // Get all institutions

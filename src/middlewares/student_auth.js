@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const { findById } = require("../services/awsService");
 
-const instituteAuth = async (req, res, next) => {
+const studentAuth = async (req, res, next) => {
   try {
     //get token from cookie or AUTHORIZATION OF HEADER
     const token =
@@ -10,6 +10,8 @@ const instituteAuth = async (req, res, next) => {
         ? req.header("Authorization").replace("Bearer ", "")
         : null);
 
+       
+
     if (!token) {
       return res.status(401).json({ message: "No auth token, access denied" });
     }
@@ -17,19 +19,21 @@ const instituteAuth = async (req, res, next) => {
     //VERIFY TOKEN
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const { id } = decoded || {};
+    
 
     if (!id) {
-      return res.status(401).json({ message: "Invalid token payload" });
+      return res.status(401).json({ message: "Student not found" });
     }
 
     // Load full user by id
-    const institute = await findById(id, "Institutions", "institutionId");
-    if (!institute) {
+    const student = await findById(id, "students", "studentId");
+
+    console.log(student);
+    
+    if (!student) {
       return res.status(404).json({ message: "User not found" });
     }
-    console.log(institute);
-
-    req.institute = institute; //attach user info to request object
+    req.student = student; //attach user info to request object
     next(); //proceed to next middleware or route handler
   } catch (err) {
     console.error("Auth error : ", err);
@@ -37,4 +41,4 @@ const instituteAuth = async (req, res, next) => {
   }
 };
 
-module.exports = instituteAuth;
+module.exports = studentAuth;
