@@ -5,6 +5,7 @@ const studentAuth = express.Router();
 const awsService = require("../../services/awsService");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const studAuth = require("../../middlewares/student_auth");
 // const studentAuth = require("../../middlewares/student_auth");
 
 //signup route
@@ -103,5 +104,41 @@ studentAuth.post("/students/logout", (req, res) => {
   res.status(200).json({ message: "Logged out successfully" });
 });
 
+//Change Password Route
+studentAuth.post("/students/change-password", studAuth, async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    const student = req.student;
+
+    // Validate input
+    if (!oldPassword || !newPassword) {
+      return res
+        .status(400)
+        .json({ message: "Old password and new password are required" });
+    }
+
+    // Check if old password matches
+    const isMatch = await bcrypt.compare(oldPassword, student.passwordHash);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Old password is incorrect" });
+    }
+
+    // Hash new password
+    const newHashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password in database
+    await awsService.updatePassword(
+      student.studentId,
+      newHashedPassword,
+      "students"
+    );
+    res.status(200).json({ message: "Password changed successfully" });
+  } catch (err) {
+    console.error("Error in /change-password:", err);
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: err.message });
+  }
+});
 
 module.exports = studentAuth;
