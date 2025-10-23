@@ -1,6 +1,6 @@
 const express = require("express");
 const { createStudent } = require("../../services/studentService");
-const { validateStudentSchema } = require("../../middlewares/validation");
+const { validateStudentSchema } = require("../../validations/validation");
 const studentAuth = express.Router();
 const awsService = require("../../services/awsService");
 const jwt = require("jsonwebtoken");
@@ -49,7 +49,6 @@ studentAuth.post("/students/signup", async (req, res) => {
   }
 });
 
-
 // Signin route
 studentAuth.post("/students/login", async (req, res) => {
   try {
@@ -68,7 +67,7 @@ studentAuth.post("/students/login", async (req, res) => {
     if (!student) {
       return res.status(404).json({ message: "Student not found" });
     }
-console.log("Student found:", student);
+    console.log("Student found:", student);
     //compare password
     const isMatch = await bcrypt.compare(password, student.passwordHash);
     if (!isMatch) {
@@ -76,11 +75,9 @@ console.log("Student found:", student);
     }
 
     //create JWT token    cccheckkk
-    const token = jwt.sign(
-      { id: student.studentId },
-      process.env.JWT_SECRET,
-      { expiresIn: "2d" }
-    );
+    const token = jwt.sign({ id: student.studentId }, process.env.JWT_SECRET, {
+      expiresIn: "2d",
+    });
 
     //set token in cookie
     res.cookie("token", token, {

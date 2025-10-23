@@ -10,8 +10,6 @@ const studentAuth = async (req, res, next) => {
         ? req.header("Authorization").replace("Bearer ", "")
         : null);
 
-       
-
     if (!token) {
       return res.status(401).json({ message: "No auth token, access denied" });
     }

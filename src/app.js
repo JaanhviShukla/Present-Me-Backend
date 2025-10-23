@@ -9,11 +9,8 @@ const dashboardrouter = require("./routes/admin/dashboard");
 const sAdminRouter = require("./routes/sAdmin/sAdmin_institute");
 const sAdminAuth = require("./routes/sAdmin/sauth");
 const studentAuth = require("./routes/student/studentAuth");
-<<<<<<< HEAD
 const teacherAuth = require("./routes/teacher/teacherAuth");
-=======
 const studentProfile = require("./routes/student/studentProfile");
->>>>>>> 5970775bddb3d597ebdcf11620831c78ceb86087
 
 const app = express();
 app.use(express.json()); // or express.json()
@@ -24,11 +21,8 @@ app.use("/", dashboardrouter);
 app.use("/", sAdminRouter);
 app.use("/", sAdminAuth);
 app.use("/", studentAuth);
-<<<<<<< HEAD
 app.use("/", teacherAuth);
-=======
 app.use("/", studentProfile);
->>>>>>> 5970775bddb3d597ebdcf11620831c78ceb86087
 
 // Mount routes
 // app.use('/api/institutions', institutionRoutes);
