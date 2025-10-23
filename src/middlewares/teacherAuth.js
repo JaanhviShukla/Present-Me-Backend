@@ -18,12 +18,12 @@ const tAuth = async (req, res, next) => {
       return res.status(401).json({message:"Invalid token payload"});
     }
     // Load full user by id
-    const teacher_id = await findById(id,"teachers");
-    console.log("Authenticated user:",teacher_id);
-    if(!teacher_id){
+    const teacherId = await findById(id,"teachers", "teacherId");
+    console.log("Authenticated user:",teacherId);
+    if(!teacherId){
       return res.status(404).json({message:"User not found"});
     }
-    req.teacher_id= teacher_id; //attach user info to request object
+    req.teacherId= teacherId; //attach user info to request object
     next(); //proceed to next middleware or route handler
   } catch(err){
     console.error("Auth error : ",err);

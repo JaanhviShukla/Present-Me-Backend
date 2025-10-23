@@ -11,9 +11,6 @@ const EMAIL_INDEX="EmailIndex";
 
 async function createTeacher(data){
 
-  
-  const teacherId="teach-"+uuidv4();
-
   const normalizedEmail=data.emailId.toLowerCase();
   //1) check duplicate
   const existing = await findByEmail(normalizedEmail, "teachers");
@@ -25,23 +22,19 @@ async function createTeacher(data){
 
   const hashedPassword = await bcrypt.hash(data.password,10);
 
-  const institution = await findById(data.institutionId, "Institutions");
+  const institution = await findById(data.institutionId, "Institutions", "institutionId");
   if (!institution) {
     throw new Error("Invalid institutionId — no such institution found.");
   }
 
-
-
-
   const item={
-    teacherId,
+    teacherId:"t-"+uuidv4(),
     firstName: data.firstName,  
     lastName: data.lastName,
     emailId: normalizedEmail,
     phone: data.phone,
     passwordHash: hashedPassword,
     institutionId: data.institutionId,
-    collegeName: data.collegeName,
     status: "pending",
     createdAt: new Date().toISOString()
   };

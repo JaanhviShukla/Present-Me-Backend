@@ -10,7 +10,6 @@ const sAdminRouter = express.Router();
 sAdminRouter.get("/sadmin/institutes", SAuth, async (req, res) => {
   try {
     // console.log("SAdmin accessing all institutions:", req.admin);
-
     const institutions = await getAllInstitutions();
     res.status(200).json({ success: true, data: institutions });
   } catch (err) {
@@ -18,6 +17,7 @@ sAdminRouter.get("/sadmin/institutes", SAuth, async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 });
+
 
 // ✅ Update institution status
 sAdminRouter.patch(

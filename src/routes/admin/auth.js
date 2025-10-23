@@ -1,6 +1,6 @@
 const express = require("express");
 const authRouter = express.Router();
-const { validateInstitutionSchema } = require("../../middlewares/validation");
+const { validateInstitutionSchema } = require("../../validations/validation");
 const awsService = require("../../services/awsService");
 const multer = require("multer");
 const { uploadToS3 } = require("../../S3");
@@ -33,7 +33,10 @@ authRouter.post(
       } = value;
 
       // Check for duplicate email BEFORE uploading files to S3
-      const existingInstitution = await awsService.findByEmail(emailId, "Institutions");
+      const existingInstitution = await awsService.findByEmail(
+        emailId,
+        "Institutions"
+      );
       if (existingInstitution) {
         return res.status(409).json({ message: "Email already exists" });
       }

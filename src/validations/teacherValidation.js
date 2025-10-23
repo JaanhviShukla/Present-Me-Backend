@@ -6,7 +6,6 @@ const teacherSignupSchema= Joi.object({
   phone:Joi.string().pattern(/^[0-9]{10}$/).required(),
   password: Joi.string().min(6).max(128).required(),
   institutionId: Joi.string().required(),
-  collegeName: Joi.string().min(2).max(100).required(),
 
 
 
