@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const {  findByEmail } = require("../services/institutionService");
+const { findByEmail } = require("../services/awsService");
 
 const SAuth = async (req, res, next) => {
   try {
@@ -13,14 +13,12 @@ const SAuth = async (req, res, next) => {
     if (!token) {
       return res.status(401).json({ message: "No auth token, access denied" });
     }
-    
 
     //VERIFY TOKEN
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const { id} = decoded || {};
-    console.log( id);
-   
-    
+    const { id } = decoded || {};
+    console.log(id);
+
     if (!id) {
       return res.status(401).json({ message: "Admin not found" });
     }

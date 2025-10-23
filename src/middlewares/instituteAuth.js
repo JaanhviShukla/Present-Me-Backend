@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const { findById } = require("../services/institutionService");
+const { findById } = require("../services/awsService");
 
 const instituteAuth = async (req, res, next) => {
   try {
@@ -23,7 +23,7 @@ const instituteAuth = async (req, res, next) => {
     }
 
     // Load full user by id
-    const inst_id = await findById(id);
+    const inst_id = await findById(id, "Institutions");
     console.log("Authenticated user:", inst_id);
     if (!inst_id) {
       return res.status(404).json({ message: "User not found" });

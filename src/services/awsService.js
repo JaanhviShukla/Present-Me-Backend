@@ -13,7 +13,7 @@ const EMAIL_INDEX="EmailIndex";
 // Validation schema
 
 
-async function findByEmail(emailId, tableName,){
+async function findByEmail(emailId, tableName){
   //query the gsi to see if email already exists
   const cmd= new QueryCommand({
     TableName: tableName,
@@ -70,14 +70,17 @@ async function createInstitution({firstName,lastName,emailId,phone,InstitutionNa
   return itemWithoutPasswordHash;
 }
 
+
+
 // Find institution by primary key (institutionId)
-async function findById(institutionId){
+async function findById(institutionId, tableName=TABLE_NAME) {
   const cmd = new GetCommand({
-    TableName: TABLE_NAME,
+    TableName: tableName,
     Key: { institutionId },
   });
-  const res = await docClient.send(cmd);
-  return res.Item || null;
+  const institutionRes = await docClient.send(cmd);
+  const institution = institutionRes.Item|| null;
+  return institution;
 }
 
 // Get all institutions

@@ -1,6 +1,6 @@
 const express = require("express");
 const sAdminAuth = express.Router();
-const institutionService = require("../../services/institutionService");
+const awsService = require("../../services/awsService");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 
@@ -17,7 +17,7 @@ sAdminAuth.post("/sadmin/login", async (req, res) => {
     }
 
     // Find admin by email
-    const admin = await institutionService.findByEmail(emailId, "admin");
+    const admin = await awsService.findByEmail(emailId, "admin");
     
 
     if (!admin) {

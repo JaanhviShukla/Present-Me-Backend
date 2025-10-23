@@ -1,7 +1,7 @@
 const express = require("express");
 const authRouter = express.Router();
-const validateInstitutionSchema = require("../../middlewares/validation");
-const institutionService = require("../../services/institutionService");
+const { validateInstitutionSchema } = require("../../middlewares/validation");
+const awsService = require("../../services/awsService");
 const multer = require("multer");
 const { uploadToS3 } = require("../../S3");
 const jwt = require("jsonwebtoken");
@@ -33,7 +33,7 @@ authRouter.post(
       } = value;
 
       // Check for duplicate email BEFORE uploading files to S3
-      const existingInstitution = await institutionService.findByEmail(emailId);
+      const existingInstitution = await awsService.findByEmail(emailId, "Institutions");
       if (existingInstitution) {
         return res.status(409).json({ message: "Email already exists" });
       }
@@ -62,7 +62,7 @@ authRouter.post(
         );
       }
 
-      const newInstitution = await institutionService.createInstitution({
+      const newInstitution = await awsService.createInstitution({
         firstName,
         lastName,
         emailId,
@@ -102,7 +102,7 @@ authRouter.post("/login", async (req, res) => {
     }
 
     // Find institution by email
-    const institution = await institutionService.findByEmail(emailId, "Institutions");
+    const institution = await awsService.findByEmail(emailId, "Institutions");
     //console.log("Institution found:", institution);
     if (!institution) {
       return res.status(404).json({ message: "Institution not found" });
