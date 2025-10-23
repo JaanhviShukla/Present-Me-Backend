@@ -24,7 +24,7 @@ async function createStudent({firstName,lastName,emailId,phone,institutionId,pas
   const passwordHash = await bcrypt.hash(password,SALT_ROUNDS);
 
   //Get institution info (for name reference)
-  const institution = await findById(institutionId, "Institutions");
+  const institution = await findById(institutionId, "Institutions", "institutionId");
   
   if (!institution) {
     throw new Error("Invalid institutionId — no such institution found.");

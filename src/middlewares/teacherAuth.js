@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const { findById } = require("../services/awsService");
 
-const teacherAuth = async (req, res, next) => {
+const tAuth = async (req, res, next) => {
   try{
     //get token from cookie or AUTHORIZATION OF HEADER
     const token = req.cookies?.token ||
@@ -30,4 +30,4 @@ const teacherAuth = async (req, res, next) => {
     res.status(401).json({message:"Invalid or expired token"});
   }
 };
-module.exports= teacherAuth;
+module.exports= tAuth;

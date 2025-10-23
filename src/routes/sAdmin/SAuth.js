@@ -59,5 +59,9 @@ sAdminAuth.post("/sadmin/login", async (req, res) => {
   }
 });
 
+sAdminAuth.post("/sadmin/logout", (req, res) => {
+  res.clearCookie("token");
+  res.status(200).json({ message: "Logged out successfully" });
+});
 
 module.exports = sAdminAuth;
