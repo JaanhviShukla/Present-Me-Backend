@@ -112,4 +112,20 @@ async function updateInstitutionStatus(institutionId, newStatus) {
   return res.Attributes;
 }
 
-module.exports={createInstitution, findByEmail, findById, getAllInstitutions, updateInstitutionStatus};
+
+async function updatePassword(studentId, newHashedPassword, tableName = TABLE_NAME) {
+  const params = new UpdateCommand({
+    TableName: tableName,
+    Key: { studentId },
+    UpdateExpression: "SET passwordHash = :newPass, updatedAt = :updatedAt",
+    ExpressionAttributeValues: {
+      ":newPass": newHashedPassword,
+      ":updatedAt": new Date().toISOString(),
+    },
+  });
+
+  await docClient.send(params);
+  return { success: true };
+}
+
+module.exports={createInstitution, findByEmail, findById, getAllInstitutions, updateInstitutionStatus, updatePassword};

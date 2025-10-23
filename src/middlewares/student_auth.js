@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const { findById } = require("../services/awsService");
 
-const studentAuth = async (req, res, next) => {
+const studAuth = async (req, res, next) => {
   try {
     //get token from cookie or AUTHORIZATION OF HEADER
     const token =
@@ -39,4 +39,4 @@ const studentAuth = async (req, res, next) => {
   }
 };
 
-module.exports = studentAuth;
+module.exports = studAuth;

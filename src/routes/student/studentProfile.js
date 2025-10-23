@@ -1,9 +1,9 @@
 const express = require("express");
-const studentAuth = require("../../middlewares/student_auth");
+const studAuth = require("../../middlewares/student_auth");
 const studentProfile = express.Router();
 
 
-studentProfile.get("/students/profile", studentAuth, async (req, res) => {
+studentProfile.get("/students/profile", studAuth, async (req, res) => {
   try {
     const student = req.student;
 
