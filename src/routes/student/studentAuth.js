@@ -130,7 +130,8 @@ studentAuth.post("/students/change-password", studAuth, async (req, res) => {
     await awsService.updatePassword(
       student.studentId,
       newHashedPassword,
-      "students"
+      "students",
+      "studentId"
     );
     res.status(200).json({ message: "Password changed successfully" });
   } catch (err) {

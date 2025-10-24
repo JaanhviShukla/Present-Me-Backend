@@ -126,10 +126,10 @@ async function updateInstitutionStatus(id, newStatus, tableName, keyName) {
 }
 
 // Update password for a student
-async function updatePassword(studentId, newHashedPassword, tableName) {
+async function updatePassword(id, newHashedPassword, tableName, keyName) {
   const cmd = new UpdateCommand({
     TableName: tableName,
-    Key: { studentId },
+    Key: { [keyName]: id },
     UpdateExpression: "SET passwordHash = :p",
     ExpressionAttributeValues: {
       ":p": newHashedPassword,

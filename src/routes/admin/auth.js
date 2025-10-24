@@ -6,6 +6,7 @@ const multer = require("multer");
 const { uploadToS3 } = require("../../S3");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const instituteAuth = require("../../middlewares/instituteAuth");
 
 const upload = multer({ storage: multer.memoryStorage() }); // Store files in memory for processing
 
@@ -148,6 +149,44 @@ authRouter.post("/login", async (req, res) => {
 authRouter.post("/logout", (req, res) => {
   res.clearCookie("token");
   res.status(200).json({ message: "Logged out successfully" });
+});
+
+//Change Password Route
+authRouter.post("/admin/change-password", instituteAuth, async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    const institute = req.institute;
+
+    // Validate input
+    if (!oldPassword || !newPassword) {
+      return res
+        .status(400)
+        .json({ message: "Old password and new password are required" });
+    }
+
+    // Check if old password matches
+    const isMatch = await bcrypt.compare(oldPassword, institute.passwordHash);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Old password is incorrect" });
+    }
+
+    // Hash new password
+    const newHashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password in database
+    await awsService.updatePassword(
+      institute.institutionId,
+      newHashedPassword,
+      "Institutions",
+      "institutionId"
+    );
+    res.status(200).json({ message: "Password changed successfully" });
+  } catch (err) {
+    console.error("Error in /change-password:", err);
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: err.message });
+  }
 });
 
 module.exports = authRouter;
