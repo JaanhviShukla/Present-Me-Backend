@@ -126,7 +126,7 @@ async function updateInstitutionStatus(id, newStatus, tableName, keyName) {
 }
 
 // Update password for a student
-async function updatePassword(studentId, newHashedPassword, tableName = "students") {
+async function updatePassword(studentId, newHashedPassword, tableName) {
   const cmd = new UpdateCommand({
     TableName: tableName,
     Key: { studentId },

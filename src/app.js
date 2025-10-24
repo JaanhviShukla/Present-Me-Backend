@@ -12,6 +12,7 @@ const studentAuth = require("./routes/student/studentAuth");
 const teacherAuth = require("./routes/teacher/teacherAuth");
 const studentProfile = require("./routes/student/studentProfile");
 const adminRouter = require("./routes/admin/updateTeacStatus");
+const teacherProfile = require("./routes/teacher/teacherProfile");
 
 const app = express();
 app.use(express.json()); // or express.json()
@@ -24,7 +25,8 @@ app.use("/", sAdminAuth);
 app.use("/", studentAuth);
 app.use("/", teacherAuth);
 app.use("/", studentProfile);
-app.use("/", adminRouter);//for updating teacher status
+app.use("/", adminRouter);
+app.use("/", teacherProfile);
 
 // Mount routes
 // app.use('/api/institutions', institutionRoutes);
