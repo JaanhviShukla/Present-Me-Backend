@@ -4,7 +4,7 @@ const teacherProfile = express.Router();
 
 teacherProfile.get("/teachers/profile", tAuth, async (req, res) => {
   try {
-    const teacher = req.teacher;
+    const teacher = req.teacherId;
 
     if (!teacher){
       return res.status(400).json({ message: "Teacher ID is required" });
