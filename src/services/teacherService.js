@@ -7,7 +7,9 @@ const bcrypt = require("bcrypt");
 
 
 const TABLE_NAME="teachers";
-const EMAIL_INDEX="EmailIndex";
+
+
+
 
 async function createTeacher(data){
 
@@ -47,4 +49,53 @@ async function createTeacher(data){
   await docClient.send(cmd);
   return item;
 }
-module.exports={createTeacher};
+
+// Generate 6-digit alphanumeric class code
+function generateClassCode() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
+async function createClass({ className, createdBy }) {
+  while (true) {
+    const classCode = generateClassCode();   // ✅ create random code
+
+    const item = {
+      classId: "c-" + uuidv4(),
+      classCode,                // ✅ PK
+      className,
+      createdBy,
+      joinRequests: [],
+      students: [],
+      createdAt: new Date().toISOString()
+    };
+
+    try {
+      const putCmd = new PutCommand({
+        TableName: "classes",
+        Item: item,
+        ConditionExpression: "attribute_not_exists(classCode)" 
+        // ✅ Ensures NO duplicate classCode
+      });
+
+      await docClient.send(putCmd);
+
+      return item; // ✅ SUCCESS — code is unique
+    } 
+    catch (err) {
+
+      if (err.name === "ConditionalCheckFailedException") {
+        // ❌ classCode already exists → generate a new one
+        continue;
+      }
+      // Other errors → throw
+      throw err;
+    }
+  }
+}
+
+module.exports={createTeacher, createClass};

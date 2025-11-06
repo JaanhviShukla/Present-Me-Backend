@@ -17,6 +17,7 @@
      -/teachers/logout
      -/teachers/change-password
      -/teachers/profile
+     -/teachers/class                   POST -> to create the class
 
 
 

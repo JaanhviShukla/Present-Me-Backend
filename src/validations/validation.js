@@ -54,4 +54,12 @@ const validateStudentSchema = Joi.object({
   }),
 });
 
-module.exports = { validateInstitutionSchema, validateStudentSchema };
+
+const validateClassSchema = Joi.object({
+  className: Joi.string().trim().min(2).max(100).required().messages({
+    "string.empty": "Class name is required",
+    "string.min": "Class name must be at least 2 characters long",
+  }),
+});
+
+module.exports = { validateInstitutionSchema, validateStudentSchema, validateClassSchema };
