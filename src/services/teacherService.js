@@ -4,6 +4,7 @@ const {docClient}= require('../dynamoDb');
 const {findByEmail,findById}= require("./awsService");
 const {v4:uuidv4}= require('uuid');
 const bcrypt = require("bcrypt");
+const { customAlphabet } = require('nanoid');
 
 
 const TABLE_NAME="teachers";
@@ -51,51 +52,43 @@ async function createTeacher(data){
 }
 
 // Generate 6-digit alphanumeric class code
-function generateClassCode() {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let code = '';
-  for (let i = 0; i < 6; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return code;
-}
+const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+const generateClassCode = customAlphabet(alphabet, 6);
+
 
 async function createClass({ className, createdBy }) {
   while (true) {
-    const classCode = generateClassCode();   // ✅ create random code
+    const classCode = generateClassCode();
 
     const item = {
       classId: "c-" + uuidv4(),
-      classCode,                // ✅ PK
+      classCode,   // PK
       className,
       createdBy,
       joinRequests: [],
       students: [],
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
 
     try {
-      const putCmd = new PutCommand({
-        TableName: "classes",
-        Item: item,
-        ConditionExpression: "attribute_not_exists(classCode)" 
-        // ✅ Ensures NO duplicate classCode
-      });
+      await docClient.send(
+        new PutCommand({
+          TableName: "classes",
+          Item: item,
+          ConditionExpression: "attribute_not_exists(classCode)" 
+        })
+      );
 
-      await docClient.send(putCmd);
-
-      return item; // ✅ SUCCESS — code is unique
-    } 
-    catch (err) {
-
+      return item; // ✅ success, unique code
+    } catch (err) {
       if (err.name === "ConditionalCheckFailedException") {
-        // ❌ classCode already exists → generate a new one
+        // Duplicate → generate again
         continue;
       }
-      // Other errors → throw
       throw err;
     }
   }
 }
+
 
 module.exports={createTeacher, createClass};
