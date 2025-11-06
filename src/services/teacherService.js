@@ -1,5 +1,5 @@
 //created for dynamodb operations related to teachers
-const {PutCommand,QuerCommand}= require("@aws-sdk/lib-dynamodb");
+const {PutCommand, QueryCommand, DeleteCommand}= require("@aws-sdk/lib-dynamodb");
 const {docClient}= require('../dynamoDb');
 const {findByEmail,findById}= require("./awsService");
 const {v4:uuidv4}= require('uuid');
@@ -90,5 +90,26 @@ async function createClass({ className, createdBy }) {
   }
 }
 
+async function deleteClass(classCode) {
+  const deleteCmd = new DeleteCommand({
+    TableName: "classes",
+    Key: {
+      classCode: classCode
+    },
+    ConditionExpression: "attribute_exists(classCode)" 
+    // ✅ ensures an error is thrown if class does NOT exist
+  });
 
-module.exports={createTeacher, createClass};
+  try {
+    await docClient.send(deleteCmd);
+    return { success: true, message: "Class deleted successfully." };
+  } catch (err) {
+    if (err.name === "ConditionalCheckFailedException") {
+      return { success: false, message: "Class does not exist." };
+    }
+    throw err; // other errors
+  }
+}
+
+
+module.exports={createTeacher, createClass, deleteClass};

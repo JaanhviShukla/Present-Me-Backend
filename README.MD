@@ -17,7 +17,9 @@
      -/teachers/logout
      -/teachers/change-password
      -/teachers/profile
-     -/teachers/class                   POST -> to create the class
+     -/teachers/class                              POST -> to create the class
+     -/teachers/class/:classCode                   DELETE -> to delete the class
+
 
 
 

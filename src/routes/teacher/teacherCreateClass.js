@@ -1,10 +1,10 @@
 const express = require("express");
 const tAuth = require("../../middlewares/teacherAuth");
-const { createClass } = require("../../services/teacherService");
+const { createClass, deleteClass } = require("../../services/teacherService");
 const { validateClassSchema } = require("../../validations/validation");
-const teacherCreateClass = express.Router();
+const teacherClass = express.Router();
 
-teacherCreateClass.post("/teachers/class", tAuth, async (req, res) => {
+teacherClass.post("/teachers/class", tAuth, async (req, res) => {
   try {
     const teacher = req.teacherId;
     if (!teacher) {
@@ -31,4 +31,23 @@ teacherCreateClass.post("/teachers/class", tAuth, async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 });
-module.exports = teacherCreateClass;
+
+teacherClass.delete("/teachers/class/:classCode", tAuth, async (req, res) => {
+  try {
+    const { classCode } = req.params;
+    if (!classCode) {
+      return res.status(400).json({ message: "Class code is required" });
+    }
+
+    const result = await deleteClass(classCode);
+    if (result.success) {
+      res.status(200).json({ success: true, message: result.message });
+    } else {
+      res.status(404).json({ success: false, message: result.message });
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+module.exports = teacherClass;
