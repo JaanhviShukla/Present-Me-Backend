@@ -16,10 +16,13 @@
      -/teachers/login
      -/teachers/logout
      -/teachers/change-password
+
      -/teachers/profile
+
      -/teachers/class                              POST -> to create the class
      -/teachers/class/:classCode                   DELETE -> to delete the class
      -/teachers/class/:classCode                   PATCH -> edit the class name
+     -/teachers/class                              GET -> get all class of login teacher
 
 
 

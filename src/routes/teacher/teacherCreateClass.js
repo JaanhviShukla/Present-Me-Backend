@@ -1,18 +1,24 @@
 const express = require("express");
 const tAuth = require("../../middlewares/teacherAuth");
-const { createClass, deleteClass, updateClassName } = require("../../services/teacherService");
-const { validateClassSchema } = require("../../validations/validation");
+const {
+  createClass,
+  deleteClass,
+  updateClassName,
+  getClassesByTeacher,
+} = require("../../services/teacherService");
+const { validateClassName } = require("../../validations/validation");
 const { data } = require("react-router-dom");
 const teacherClass = express.Router();
 
 teacherClass.post("/teachers/class", tAuth, async (req, res) => {
   try {
     const teacher = req.teacherId;
+    
     if (!teacher) {
       return res.status(400).json({ message: "Teacher ID is required" });
     }
 
-    const { error, value } = validateClassSchema.validate(req.body);
+    const { error, value } = validateClassName.validate(req.body);
     if (error) {
       return res
         .status(400)
@@ -53,7 +59,15 @@ teacherClass.delete("/teachers/class/:classCode", tAuth, async (req, res) => {
 teacherClass.patch("/teachers/class/:classCode", tAuth, async (req, res) => {
   try {
     const { classCode } = req.params;
-    const { className } = req.body;
+
+    const { error, value } = validateClassName.validate(req.body);
+    if (error) {
+      return res
+        .status(400)
+        .json({ success: false, message: error.details[0].message });
+    }
+
+    const { className } = value;
 
     if (!classCode) {
       return res.status(400).json({ message: "Class code is not found" });
@@ -64,15 +78,33 @@ teacherClass.patch("/teachers/class/:classCode", tAuth, async (req, res) => {
     }
 
     const updatedClass = await updateClassName(classCode, className);
-    
+
     if (updatedClass.success) {
-      res.status(200).json({ success: true, data: "New class name is " + className });
+      res
+        .status(200)
+        .json({ success: true, data: "New class name is " + className });
     } else {
       res.status(404).json({ success: false, message: updatedClass.message });
     }
-
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+teacherClass.get("/teachers/class", tAuth, async (req, res) => {
+  const teacherId = req.teacherId.teacherId; // ✅ your login user id
+  if (!teacherId) {
+    return res.status(400).json({ message: "Teacher is not found" });
+  }
+  try {
+    const classes = await getClassesByTeacher(teacherId);
+
+    return res.status(200).json(classes);
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 });
 

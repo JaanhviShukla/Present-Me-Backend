@@ -1,5 +1,5 @@
 //created for dynamodb operations related to teachers
-const {PutCommand, QueryCommand, DeleteCommand, UpdateCommand}= require("@aws-sdk/lib-dynamodb");
+const {PutCommand, QueryCommand, DeleteCommand, UpdateCommand, ScanCommand}= require("@aws-sdk/lib-dynamodb");
 const {docClient}= require('../dynamoDb');
 const {findByEmail,findById}= require("./awsService");
 const {v4:uuidv4}= require('uuid');
@@ -141,5 +141,28 @@ async function updateClassName(classCode, newClassName) {
   }
 }
 
+async function getClassesByTeacher(teacherId) {
+  try {
+    const scanCmd = new ScanCommand({
+      TableName: "classes",
+      FilterExpression: "createdBy = :teacherId",
+      ExpressionAttributeValues: {
+        ":teacherId": teacherId
+      }
+    });
 
-module.exports={createTeacher, createClass, deleteClass, updateClassName};
+    const result = await docClient.send(scanCmd);
+
+    return {
+      success: true,
+      classes: result.Items || []
+    };
+
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+}
+
+
+module.exports={createTeacher, createClass, deleteClass, updateClassName, getClassesByTeacher};
