@@ -14,7 +14,7 @@ studentProfile.get("/students/profile", studAuth, async (req, res) => {
     res.status(200).json({ success: true, data: student.firstName});
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, message: err.message });
+    res.status(500).json({ success: false, message: err.message }) ;
   }
 });
 
