@@ -1,5 +1,5 @@
 //created for dynamodb operations related to teachers
-const {PutCommand, QueryCommand, DeleteCommand}= require("@aws-sdk/lib-dynamodb");
+const {PutCommand, QueryCommand, DeleteCommand, UpdateCommand}= require("@aws-sdk/lib-dynamodb");
 const {docClient}= require('../dynamoDb');
 const {findByEmail,findById}= require("./awsService");
 const {v4:uuidv4}= require('uuid');
@@ -111,5 +111,35 @@ async function deleteClass(classCode) {
   }
 }
 
+async function updateClassName(classCode, newClassName) {
+  try {
+    const cmd = new UpdateCommand({
+      TableName: "classes",
+      Key: { classCode },
+      UpdateExpression: "SET className = :newName",
+      ExpressionAttributeValues: {
+        ":newName": newClassName
+      },
+      ConditionExpression: "attribute_exists(classCode)" 
+      // ✅ ensures the class exists before updating
+    });
 
-module.exports={createTeacher, createClass, deleteClass};
+    await docClient.send(cmd);
+
+    return {
+      success: true,
+      message: "Class name updated successfully.",
+    };
+  } catch (err) {
+    if (err.name === "ConditionalCheckFailedException") {
+      return {
+        success: false,
+        message: "Class not found.",
+      };
+    }
+    throw err;
+  }
+}
+
+
+module.exports={createTeacher, createClass, deleteClass, updateClassName};

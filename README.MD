@@ -19,6 +19,7 @@
      -/teachers/profile
      -/teachers/class                              POST -> to create the class
      -/teachers/class/:classCode                   DELETE -> to delete the class
+     -/teachers/class/:classCode                   PATCH -> edit the class name
 
 
 

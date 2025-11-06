@@ -1,7 +1,8 @@
 const express = require("express");
 const tAuth = require("../../middlewares/teacherAuth");
-const { createClass, deleteClass } = require("../../services/teacherService");
+const { createClass, deleteClass, updateClassName } = require("../../services/teacherService");
 const { validateClassSchema } = require("../../validations/validation");
+const { data } = require("react-router-dom");
 const teacherClass = express.Router();
 
 teacherClass.post("/teachers/class", tAuth, async (req, res) => {
@@ -24,9 +25,8 @@ teacherClass.post("/teachers/class", tAuth, async (req, res) => {
       className,
       createdBy: teacher.teacherId,
     });
-    
-    res.status(201).json({ success: true, data: newClass });
 
+    res.status(201).json({ success: true, data: newClass });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -47,6 +47,32 @@ teacherClass.delete("/teachers/class/:classCode", tAuth, async (req, res) => {
     }
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+teacherClass.patch("/teachers/class/:classCode", tAuth, async (req, res) => {
+  try {
+    const { classCode } = req.params;
+    const { className } = req.body;
+
+    if (!classCode) {
+      return res.status(400).json({ message: "Class code is not found" });
+    }
+
+    if (!className) {
+      return res.status(400).json({ message: "Enter the class name" });
+    }
+
+    const updatedClass = await updateClassName(classCode, className);
+    
+    if (updatedClass.success) {
+      res.status(200).json({ success: true, data: "New class name is " + className });
+    } else {
+      res.status(404).json({ success: false, message: updatedClass.message });
+    }
+
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
   }
 });
 
