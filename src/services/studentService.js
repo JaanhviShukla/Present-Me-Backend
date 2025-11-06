@@ -1,4 +1,4 @@
-const { PutCommand } = require("@aws-sdk/lib-dynamodb");
+const { PutCommand,UpdateCommand } = require("@aws-sdk/lib-dynamodb");
 const { findByEmail, findById } = require("./awsService");
 const {v4:uuidv4}= require('uuid');
 const bcrypt = require("bcrypt");
@@ -7,6 +7,7 @@ const{docClient}= require('../dynamoDb');
 
 const SALT_ROUNDS=10;
 const TABLE_NAME="students";
+const CLASS_TABLE="classes";
 
 
 async function createStudent({firstName,lastName,emailId,phone,institutionId,password,rollNo}){
@@ -56,4 +57,23 @@ async function createStudent({firstName,lastName,emailId,phone,institutionId,pas
   return itemWithoutPasswordHash;
 }
 
-module.exports={createStudent};
+
+async function addJoinRequest(classCode,studentId){
+  const updateCmd= new UpdateCommand({
+    TableName:CLASS_TABLE,
+    Key:{ classCode },
+    UpdateExpression: "SET joinRequests = list_append(if_not_exists(joinRequests, :empty_list), :studentId)",
+    ExpressionAttributeValues:{
+      ":studentId":[studentId],
+      ":empty_list":[],
+    },
+    ReturnValues:"UPDATED_NEW",
+  });
+  try{
+    await docClient.send(updateCmd);
+  }catch(err){
+    throw new Error("Failed to add join request: " + err.message);  
+  }
+  }
+
+module.exports={createStudent,addJoinRequest};

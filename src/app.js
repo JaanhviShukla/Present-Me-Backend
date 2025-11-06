@@ -14,6 +14,7 @@ const studentProfile = require("./routes/student/studentProfile");
 const adminRouter = require("./routes/admin/updateTeacStatus");
 const teacherProfile = require("./routes/teacher/teacherProfile");
 const teacherClass = require("./routes/teacher/teacherCreateClass");
+const studentJoin = require("./routes/student/studentJoinRequest");
 
 const app = express();
 app.use(express.json()); // or express.json()
@@ -29,6 +30,7 @@ app.use("/", studentProfile);
 app.use("/", adminRouter);
 app.use("/", teacherProfile);
 app.use("/", teacherClass);
+app.use("/", studentJoin);
 
 // Mount routes
 // app.use('/api/institutions', institutionRoutes);

@@ -8,6 +8,7 @@
      -/students/logout
      -/students/prfile
      -/students/change-password
+     -/students/joinRequests
 
 
   2=> Teachers 
@@ -42,3 +43,6 @@
     -/sadmin/login
     -/sadmin/institutes                                          -> to get list of institute
     -/sadmin/institutes/:institutionId/status
+
+   5=> services
+      - addJoinRequest   ->function is created
