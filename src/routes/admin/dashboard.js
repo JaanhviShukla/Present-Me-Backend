@@ -4,7 +4,7 @@ const dashboardrouter = express.Router();
 //const router = require("./auth");
 const instituteAuth = require("../../middlewares/instituteAuth");
 
-dashboardrouter.get("/dashboard", instituteAuth, (req, res) => {
+dashboardrouter.get("/admin/dashboard", instituteAuth, (req, res) => {
   console.log(req.institute);
   res.json({ message: `Welcome to the dashboard, ${req.institute.firstName}` });
 });

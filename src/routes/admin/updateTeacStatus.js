@@ -8,7 +8,7 @@ const adminRouter = express.Router();
 
 // ✅ Update teacher status
 adminRouter.patch(
-  "/institutes/teachers/:teacherId/status",
+  "/admin/institutes/teachers/:teacherId/status",
   instituteAuth,
   async (req, res) => {
     try {

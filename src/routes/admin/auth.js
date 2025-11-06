@@ -11,8 +11,7 @@ const instituteAuth = require("../../middlewares/instituteAuth");
 const upload = multer({ storage: multer.memoryStorage() }); // Store files in memory for processing
 
 // Signup route
-authRouter.post(
-  "/signup",
+authRouter.post("/admin/signup",
   upload.fields([
     { name: "aadhar", maxCount: 1 },
     { name: "designationID", maxCount: 1 },
@@ -94,7 +93,7 @@ authRouter.post(
 );
 
 // Signin route
-authRouter.post("/login", async (req, res) => {
+authRouter.post("/admin/login", async (req, res) => {
   try {
     const { emailId, password } = req.body;
 
@@ -146,7 +145,7 @@ authRouter.post("/login", async (req, res) => {
 });
 
 // logout route
-authRouter.post("/logout", (req, res) => {
+authRouter.post("/admin/logout", (req, res) => {
   res.clearCookie("token");
   res.status(200).json({ message: "Logged out successfully" });
 });
