@@ -1,4 +1,4 @@
-const { PutCommand,UpdateCommand } = require("@aws-sdk/lib-dynamodb");
+const { PutCommand,UpdateCommand ,ScanCommand} = require("@aws-sdk/lib-dynamodb");
 const { findByEmail, findById } = require("./awsService");
 const {v4:uuidv4}= require('uuid');
 const bcrypt = require("bcrypt");
@@ -76,4 +76,28 @@ async function addJoinRequest(classCode,studentId){
   }
   }
 
-module.exports={createStudent,addJoinRequest};
+async function getStudentJoinRequests(studentId){
+  try{ 
+    const scanParams={
+      TableName:"classes",
+      ProjectionExpression:"classCode,className,createdBy, joinRequests",
+    };
+
+    const result= await docClient.send(new ScanCommand(scanParams));
+
+    const requestedClasses=result.Items.filter(
+      (cls)=>cls.joinRequests && cls.joinRequests.includes(studentId)
+    ).map((cls)=>({
+      classCode:cls.classCode,
+      className:cls.className,
+      createdBy:cls.createdBy,  
+    }));
+
+    return requestedClasses;
+
+  }catch(err){
+    throw new Error("Failed to get join requests: " + err.message);
+  }
+}
+
+module.exports={createStudent,addJoinRequest,getStudentJoinRequests};
