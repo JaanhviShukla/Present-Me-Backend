@@ -38,10 +38,10 @@ authRouter.post("/admin/signup",
         "Institutions"
       );
       if (existingInstitution) {
-        return res.status(409).json({ message: "Email already exists" });
+        return res.status(409).json({ message: "Email already exists " });
       }
 
-      const files = req.files;
+      const files = req.files || {};
       let aadharUrl = null;
       let designationIDUrl = null;
 

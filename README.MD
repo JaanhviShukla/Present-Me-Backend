@@ -8,6 +8,7 @@
      -/students/logout
      -/students/prfile
      -/students/change-password
+     
      -/students/joinRequests
 
 

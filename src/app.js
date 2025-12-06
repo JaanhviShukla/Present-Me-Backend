@@ -18,6 +18,15 @@ const studentJoin = require("./routes/student/studentJoinRequest");
 const studentViewJoin = require("./routes/student/studentViewJoinRequests");
 
 const app = express();
+const cors = require("cors");
+
+// Middleware
+app.use(cors(
+  {
+    origin: "http://localhost:5173",
+    credentials: true,
+  }
+));
 app.use(express.json()); // or express.json()
 app.use(cookieParser());
 

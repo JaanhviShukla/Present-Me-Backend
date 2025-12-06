@@ -3,6 +3,7 @@ const { findById } = require("../services/awsService");
 
 const instituteAuth = async (req, res, next) => {
   try {
+    
     //get token from cookie or AUTHORIZATION OF HEADER
     const token =
       req.cookies?.token ||
@@ -33,7 +34,7 @@ const instituteAuth = async (req, res, next) => {
     next(); //proceed to next middleware or route handler
   } catch (err) {
     console.error("Auth error : ", err);
-    res.status(401).json({ message: "Invalid or expired token" });
+    res.status(401).json({ message: err.message });
   }
 };
 

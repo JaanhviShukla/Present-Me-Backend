@@ -44,7 +44,7 @@ async function createInstitution({
   //lowercase email to ensure uniqueness
   const normalizedEmail = emailId.toLowerCase();
   //1) check duplicate
-  const existing = await findByEmail(normalizedEmail);
+  const existing = await findByEmail(normalizedEmail, TABLE_NAME);
   if (existing) {
     const err = new Error("Email already exists");
     err.code = "DUPLICATE_EMAIL";

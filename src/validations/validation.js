@@ -8,7 +8,7 @@ const validateInstitutionSchema = Joi.object({
   password: Joi.string().min(6).max(128).required(),
   InstitutionName: Joi.string().min(2).max(100).required(),
   Role: Joi.string().valid("Dean", "HOD", "Class Incharge").required(),
-});
+}).unknown(true); // Allow file uploads like aadhar and designationID
 
 const validateStudentSchema = Joi.object({
   firstName: Joi.string().trim().min(2).max(50).required().messages({

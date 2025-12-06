@@ -25,7 +25,7 @@ sAdminAuth.post("/sadmin/login", async (req, res) => {
     }
 
     //compare password
-    const isMatch = await bcrypt.compare(password, admin.password);
+    const isMatch = await bcrypt.compare(password, admin.passwordHash);
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
