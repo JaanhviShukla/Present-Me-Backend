@@ -3,6 +3,7 @@ const sAdminAuth = express.Router();
 const awsService = require("../../services/awsService");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const SAuth = require("../../middlewares/s_admin_auth");
 
 // Signin route
 sAdminAuth.post("/sadmin/login", async (req, res) => {
@@ -59,6 +60,19 @@ sAdminAuth.post("/sadmin/login", async (req, res) => {
   }
 });
 
+//profile
+sAdminAuth.get("/sadmin/profile", SAuth, async (req, res) => {
+  try {
+   const admin = req.admin;
+    
+   return res.status(200).json({ admin });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// logout 
 sAdminAuth.post("/sadmin/logout", (req, res) => {
   res.clearCookie("token");
   res.status(200).json({ message: "Logged out successfully" });

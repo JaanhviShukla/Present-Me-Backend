@@ -9,6 +9,10 @@ const validateInstitutionSchema = Joi.object({
   InstitutionName: Joi.string().min(2).max(100).required(),
   Role: Joi.string().valid("Dean", "HOD", "Class Incharge").required(),
   bio:Joi.string().max(500).optional().allow(null,""),
+  address: Joi.string().min(10).max(200).required(),
+  website: Joi.string().min(0).max(50).required(),
+  expectedStudents: Joi.number().integer().min(0).required(),
+  expectedTeachers: Joi.number().integer().min(0).required(),
 }).unknown(true); // Allow file uploads like aadhar and designationID
 
 const validateStudentSchema = Joi.object({

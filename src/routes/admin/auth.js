@@ -30,6 +30,10 @@ authRouter.post("/admin/signup",
         password,
         InstitutionName,
         Role,
+        address,
+        website,
+        expectedStudents,
+        expectedTeachers
       } = value;
 
       // Check for duplicate email BEFORE uploading files to S3
@@ -75,6 +79,10 @@ authRouter.post("/admin/signup",
         Role,
         aadharUrl,
         designationIDUrl,
+        address,
+        website,
+        expectedStudents,
+        expectedTeachers
       });
       res.status(201).json({
         message: "Institution created successfully",

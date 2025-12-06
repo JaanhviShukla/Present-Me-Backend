@@ -40,8 +40,10 @@ async function createInstitution({
   password,
   aadharUrl,
   designationIDUrl,
-
-
+  address,
+  website,
+  expectedStudents,
+  expectedTeachers
 }) {
   //lowercase email to ensure uniqueness
   const normalizedEmail = emailId.toLowerCase();
@@ -71,6 +73,10 @@ async function createInstitution({
     status: "pending",
     type: "institute",
     createdAt: new Date().toISOString(),
+    address,
+    website,
+    expectedStudents,
+    expectedTeachers
   };
 
   //4)put item
