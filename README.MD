@@ -10,6 +10,7 @@
      -/students/change-password
      
      -/students/joinRequests
+     -/students/ViewJoinRequest
 
 
   2=> Teachers 
@@ -36,6 +37,8 @@
      -/admin/logout
      -/admin/dashboard
      -admin/change-password
+     
+     -admin/profile  (patch api to update profile)
 
 
 

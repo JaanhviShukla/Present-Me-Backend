@@ -8,6 +8,7 @@ const validateInstitutionSchema = Joi.object({
   password: Joi.string().min(6).max(128).required(),
   InstitutionName: Joi.string().min(2).max(100).required(),
   Role: Joi.string().valid("Dean", "HOD", "Class Incharge").required(),
+  bio:Joi.string().max(500).optional().allow(null,""),
 }).unknown(true); // Allow file uploads like aadhar and designationID
 
 const validateStudentSchema = Joi.object({
@@ -62,4 +63,19 @@ const validateClassName = Joi.object({
   }),
 });
 
-module.exports = { validateInstitutionSchema, validateStudentSchema, validateClassName };
+const validatePatchInstitutionSchema =Joi.object({
+  firstName: Joi.string().min(2).max(30).optional(),
+  lastName: Joi.string().min(2).max(30).optional(),
+  emailId: Joi.forbidden().messages({
+    "any.unknown": "Email cannot be updated",
+  }),
+  phone: Joi.string().optional(),
+  InstitutionName: Joi.string().min(2).max(100).optional(),
+  Role: Joi.forbidden().messages({
+    "any.unknown": "Role cannot be updated",
+  }),
+  bio:Joi.string().max(500).optional().allow(null,""),
+  profilePicUrl:Joi.any().optional()
+}).unknown(true); // Allow file uploads like profilePic
+
+module.exports = { validateInstitutionSchema, validateStudentSchema, validateClassName ,validatePatchInstitutionSchema};

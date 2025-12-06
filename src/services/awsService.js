@@ -40,6 +40,8 @@ async function createInstitution({
   password,
   aadharUrl,
   designationIDUrl,
+
+
 }) {
   //lowercase email to ensure uniqueness
   const normalizedEmail = emailId.toLowerCase();
@@ -141,6 +143,31 @@ async function updatePassword(id, newHashedPassword, tableName, keyName) {
   return res.Attributes;
 }
 
+async function updateInstitutionProfile(id,updatefields){
+  const expressionParts=[];
+  const expressionValues ={};
+  const expressionNames={};
+
+  for(const[key,value] of Object.entries(updatefields)){
+    expressionParts.push(`#${key} = :${key}`);
+    expressionValues[`:${key}`]=value;
+    expressionNames[`#${key}`]=key;
+  }
+  const UpdateExpression=`SET ${expressionParts.join(", ")}`;
+
+  const cmd=new UpdateCommand({
+    TableName:TABLE_NAME,
+    Key:{ institutionId: id },
+    UpdateExpression,
+    ExpressionAttributeNames:expressionNames,
+    ExpressionAttributeValues:expressionValues,
+    ReturnValues:"ALL_NEW",
+  });
+
+  const result= await docClient.send(cmd);
+  return result.Attributes;
+}
+
 module.exports = {
   createInstitution,
   findByEmail,
@@ -148,4 +175,5 @@ module.exports = {
   getAllInstitutions,
   updateInstitutionStatus,
   updatePassword,
+  updateInstitutionProfile,
 };
