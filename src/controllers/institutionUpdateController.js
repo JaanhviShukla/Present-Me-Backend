@@ -3,7 +3,10 @@ const multer = require("multer");
 const {updateInstitutionProfile,findById}= require("../services/awsService");
 const { validatePatchInstitutionSchema } = require("../validations/validation");
 
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 20 * 1024 * 1024 } // 20 MB
+});
 
 // Configure AWS SDK
 const s3 = new S3Client({
@@ -28,19 +31,19 @@ exports.patchInstitutionProfile= async(req, res)=> {
 
     //Handle file uploads if any
     if(req.file){
-
       if(existingInstitution.profilePicUrl){
         //Delete old profile picture from S3
-        const oldKey= existingInstitution.profilePicUrl.split(".amazonaws.com/")[1];  
-        await s3.send(
-          new DeleteObjectCommand({
-            Bucket:process.env.AWS_S3_BUCKET,
-            Key:oldKey,
-          })
-        );
+        const oldKey = existingInstitution.profilePicUrl.split(".amazonaws.com/")[1];
+        if (oldKey) {
+          await s3.send(
+            new DeleteObjectCommand({
+              Bucket: process.env.AWS_S3_BUCKET,
+              Key: oldKey,
+            })
+          );
+        }
       }
       const fileKey= `institutions/profile/${institutionId}-${Date.now()}.jpg`;
-
       await s3.send(
         new PutObjectCommand({
           Bucket:process.env.AWS_S3_BUCKET,
@@ -49,7 +52,6 @@ exports.patchInstitutionProfile= async(req, res)=> {
           ContentType:req.file.mimetype,
         })
       );
-
       const profilePicUrl= `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
       updates.profilePicUrl= profilePicUrl;
     }
@@ -59,5 +61,4 @@ exports.patchInstitutionProfile= async(req, res)=> {
     res.status(500).json({success:false, message:err.message});
   }
 };
-
 exports.uploadProfileImage= upload.single("profilePicUrl");

@@ -27,8 +27,10 @@ app.use(cors(
     credentials: true,
   }
 ));
-app.use(express.json()); // or express.json()
+app.use(express.json({ limit: '200mb' }));
+app.use(express.urlencoded({ limit: '200mb', extended: true }));
 app.use(cookieParser());
+
 
 app.use("/", authRouter);
 app.use("/", dashboardrouter);
