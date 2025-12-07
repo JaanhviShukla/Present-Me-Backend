@@ -1,5 +1,9 @@
 const express = require("express");
 const tAuth = require("../../middlewares/teacherAuth");
+const {DynamoDBClient}= require("@aws-sdk/client-dynamodb");
+const{GetCommand, UpdateCommand} = require("@aws-sdk/lib-dynamodb");
+const client= new DynamoDBClient();
+const TABLE_NAME="classes";
 const {
   createClass,
   deleteClass,
@@ -107,5 +111,61 @@ teacherClass.get("/teachers/class", tAuth, async (req, res) => {
     });
   }
 });
+
+
+teacherClass.patch("/teachers/approve-student",tAuth,async(req,res)=>{
+  try{
+    const{classCode,studentId}=req.body;
+    const teacherId=req.teacherId.teacherId;
+
+    if(!classCode || !studentId){
+      return res.status(400).json({message:"classId and studentId are required"});
+    }
+
+    //Fetch class details
+    const classData= await client.send(new GetCommand({
+      TableName:TABLE_NAME,
+      Key:{classCode}
+    }));
+    if(!classData.Item){
+      return res.status(404).json({message:"Class not found"});
+    }
+    if(classData.Item.createdBy !== teacherId){
+      return res.status(403).json({message:"Unauthorized action"});
+    }
+
+    const joinRequests= classData.Item.joinRequests || [];
+    const students= classData.Item.students || [];
+
+    //check if studentId is in joinRequests
+    if(!joinRequests.includes(studentId)){
+      return res.status(400).json({message:"student not found in join request"});
+    }
+    //Remove studentId from joinRequests and add to students
+    joinRequests.splice(joinRequests.indexOf(studentId),1);
+
+    if(!students.includes(studentId)){
+      students.push(studentId);}
+    
+  
+    //Update class record
+    await client.send(new UpdateCommand({
+      TableName:TABLE_NAME,
+      Key:{classCode},
+      UpdateExpression:"SET joinRequests=:jr, students=:st",
+      ExpressionAttributeValues:{
+        ":jr":joinRequests,
+        ":st":students,
+},}));
+    return res.status(200).json({
+      message:"Student approved successfully",
+      approvedStudent: studentId,
+      classCode,
+    });
+  }catch(error){
+    console.error("Error approving student",error);
+  }
+});
+
 
 module.exports = teacherClass;
