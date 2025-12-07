@@ -59,4 +59,5 @@ exports.patchInstitutionProfile= async(req, res)=> {
     res.status(500).json({success:false, message:err.message});
   }
 };
-exports.uploadProfileImage= upload.single("profilePicture");
+
+exports.uploadProfileImage= upload.single("profilePicUrl");
