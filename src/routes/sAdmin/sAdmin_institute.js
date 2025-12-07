@@ -2,15 +2,28 @@ const express = require("express");
 const {
   getAllInstitutions,
   updateInstitutionStatus,
+  getPendingInstitutions,
+  getVerifiedInstitutions,
 } = require("../../services/awsService");
 const SAuth = require("../../middlewares/s_admin_auth");
 const sAdminRouter = express.Router();
 
-// ✅ Get all registered institutions
-sAdminRouter.get("/sadmin/institutes", SAuth, async (req, res) => {
+// Get all pending institutions
+sAdminRouter.get("/sadmin/pendingInstitutes", SAuth, async (req, res) => {
   try {
     // console.log("SAdmin accessing all institutions:", req.admin);
-    const institutions = await getAllInstitutions();
+    const institutions = await getPendingInstitutions();
+    res.status(200).json({ success: true, data: institutions });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Get all verified institutions
+sAdminRouter.get("/sadmin/verifiedInstitutes", SAuth, async (req, res) => {
+  try {
+    const institutions = await getVerifiedInstitutions();
     res.status(200).json({ success: true, data: institutions });
   } catch (err) {
     console.error(err);

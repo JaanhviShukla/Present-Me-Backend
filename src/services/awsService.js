@@ -100,14 +100,39 @@ async function findById(id, tableName = TABLE_NAME, keyName) {
   return res.Item || null;
 }
 
-// Get all institutions
-async function getAllInstitutions() {
+// Get pending institutions
+async function getPendingInstitutions() {
   const cmd = new ScanCommand({
     TableName: TABLE_NAME,
+    FilterExpression: "#status = :pending",
+    ExpressionAttributeNames: {
+      "#status": "status",
+    },
+    ExpressionAttributeValues: {
+      ":pending": "pending",
+    },
   });
   const res = await docClient.send(cmd);
   return res.Items || [];
 }
+
+// Get verified institutions
+async function getVerifiedInstitutions() {
+  const cmd = new ScanCommand({
+    TableName: TABLE_NAME,
+    FilterExpression: "#status = :verified",
+    ExpressionAttributeNames: {
+      "#status": "status",
+    },
+    ExpressionAttributeValues: {
+      ":verified": "verified",
+    },
+  });
+
+  const res = await docClient.send(cmd);
+  return res.Items || [];
+}
+
 
 // Update institution status
 async function updateInstitutionStatus(id, newStatus, tableName, keyName) {
@@ -178,7 +203,8 @@ module.exports = {
   createInstitution,
   findByEmail,
   findById,
-  getAllInstitutions,
+  getPendingInstitutions,
+  getVerifiedInstitutions,
   updateInstitutionStatus,
   updatePassword,
   updateInstitutionProfile,
