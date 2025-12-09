@@ -95,7 +95,7 @@ const validatePatchInstitutionSchema = Joi.object({
   firstName: Joi.string().min(2).max(30).optional(),
   lastName: Joi.string().min(2).max(30).optional(),
   emailId: Joi.forbidden().messages({
-    "any.unknown": "Email cannot be updated",
+    "any.unknown": "Email cannot be updated" ,
   }),
   phone: Joi.string().optional(),
   InstitutionName: Joi.string().min(2).max(100).optional(),
