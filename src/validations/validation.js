@@ -102,7 +102,7 @@ const validatePatchInstitutionSchema = Joi.object({
   Role: Joi.forbidden().messages({
     "any.unknown": "Role cannot be updated",
   }),
-  bio: Joi.string().max(500).optional().allow(null,""),
+  bio: Joi.string().max(500).optional().allow(null, ""),
   profilePicUrl: Joi.any().optional(),
 }).unknown(true); // Allow file uploads like profilePic
 
