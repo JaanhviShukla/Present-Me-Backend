@@ -8,7 +8,7 @@ const validateInstitutionSchema = Joi.object({
   password: Joi.string().min(6).max(128).required(),
   InstitutionName: Joi.string().min(2).max(100).required(),
   Role: Joi.string().valid("Dean", "HOD", "Class Incharge").required(),
-  bio:Joi.string().max(500).optional().allow(null,""),
+  bio: Joi.string().max(500).optional().allow(null, ""),
   address: Joi.string().min(10).max(200).required(),
   website: Joi.string().min(0).max(50).required(),
   expectedStudents: Joi.number().integer().min(0).required(),
@@ -59,6 +59,30 @@ const validateStudentSchema = Joi.object({
   }),
 });
 
+const validatePatchStudentSchema = Joi.object({
+  firstName: Joi.string().trim().min(2).max(50).optional(),
+
+  lastName: Joi.string().trim().min(2).max(50).optional(),
+
+  emailId: Joi.string().email().optional(),
+
+  phone: Joi.string()
+    .pattern(/^[0-9]{10}$/)
+    .optional(),
+
+  rollNo: Joi.string().trim().min(1).max(10).optional(),
+
+  semester: Joi.string().trim().min(1).max(10).optional(),
+
+  branch: Joi.string().trim().min(2).max(50).optional(),
+
+  yearOfStudy: Joi.number().integer().min(1).max(6).optional(),
+
+  section: Joi.string().trim().min(1).max(5).optional(),
+
+  bio: Joi.string().trim().max(500).optional(),
+}).unknown(true); // must update at least one field
+  
 
 const validateClassName = Joi.object({
   className: Joi.string().trim().min(2).max(100).required().messages({
@@ -67,7 +91,7 @@ const validateClassName = Joi.object({
   }),
 });
 
-const validatePatchInstitutionSchema =Joi.object({
+const validatePatchInstitutionSchema = Joi.object({
   firstName: Joi.string().min(2).max(30).optional(),
   lastName: Joi.string().min(2).max(30).optional(),
   emailId: Joi.forbidden().messages({
@@ -78,8 +102,14 @@ const validatePatchInstitutionSchema =Joi.object({
   Role: Joi.forbidden().messages({
     "any.unknown": "Role cannot be updated",
   }),
-  bio:Joi.string().max(500).optional().allow(null,""),
-  profilePicUrl:Joi.any().optional()
+  bio: Joi.string().max(500).optional().allow(null, ""),
+  profilePicUrl: Joi.any().optional(),
 }).unknown(true); // Allow file uploads like profilePic
 
-module.exports = { validateInstitutionSchema, validateStudentSchema, validateClassName ,validatePatchInstitutionSchema};
+module.exports = {
+  validateInstitutionSchema,
+  validateStudentSchema,
+  validateClassName,
+  validatePatchInstitutionSchema,
+  validatePatchStudentSchema,
+};

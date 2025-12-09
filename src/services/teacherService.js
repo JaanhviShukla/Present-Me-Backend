@@ -164,5 +164,13 @@ async function getClassesByTeacher(teacherId) {
   }
 }
 
+async function getAllInstitutions() {
+  const cmd = new ScanCommand({
+    TableName: "Institutions",
+  });
+  const res = await docClient.send(cmd);
+  return res.Items || [];
+}
 
-module.exports={createTeacher, createClass, deleteClass, updateClassName, getClassesByTeacher};
+
+module.exports={createTeacher, createClass, deleteClass, updateClassName, getClassesByTeacher, getAllInstitutions,};

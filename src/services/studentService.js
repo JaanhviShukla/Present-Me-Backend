@@ -100,4 +100,31 @@ async function getStudentJoinRequests(studentId){
   }
 }
 
-module.exports={createStudent,addJoinRequest,getStudentJoinRequests};
+async function updateStudentProfile(id, updateFields) {
+  const expressionParts = [];
+  const expressionValues = {};
+  const expressionNames = {};
+
+  for (const [key, value] of Object.entries(updateFields)) {
+    expressionParts.push(`#${key} = :${key}`);
+    expressionValues[`:${key}`] = value;
+    expressionNames[`#${key}`] = key;
+  }
+
+  const UpdateExpression = `SET ${expressionParts.join(", ")}`;
+
+  const cmd = new UpdateCommand({
+    TableName: TABLE_NAME,
+    Key: { studentId: id },
+    UpdateExpression,
+    ExpressionAttributeNames: expressionNames,
+    ExpressionAttributeValues: expressionValues,
+    ReturnValues: "ALL_NEW",
+  });
+
+  const result = await docClient.send(cmd);
+  return result.Attributes;
+}
+
+
+module.exports={createStudent,addJoinRequest,getStudentJoinRequests, updateStudentProfile};

@@ -3,6 +3,7 @@ const studAuth = require("../../middlewares/student_auth");
 const studentProfile = express.Router();
 const {DynamoDBClient}= require("@aws-sdk/client-dynamodb");
 const {ScanCommand}= require("@aws-sdk/lib-dynamodb");
+const {uploadStudentProfileImage, patchStudentProfile}= require("../../controllers/studentController");
 
 const client= new DynamoDBClient();
 const TABLE_NAME="classes";
@@ -21,6 +22,14 @@ studentProfile.get("/students/profile", studAuth, async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 });
+
+
+studentProfile.patch(
+  "/students/profile",
+  studAuth,
+  uploadStudentProfileImage,  // multer
+  patchStudentProfile         // controller
+);
 
 studentProfile.get("/students/enrolledClasses",studAuth, async(req,res)=>{
   try{

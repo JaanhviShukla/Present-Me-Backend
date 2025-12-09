@@ -9,6 +9,7 @@ const jwt = require("jsonwebtoken");
 const { findByEmail } = require("../../services/awsService");
 const tAuth = require("../../middlewares/teacherAuth");
 const awsService = require("../../services/awsService");
+const { getAllInstitutions } = require("../../services/teacherService");
 
 const teacherAuth = express.Router();
 
@@ -140,5 +141,30 @@ teacherAuth.post("/teachers/change-password", tAuth, async (req, res) => {
       .json({ message: "Internal server error", error: err.message });
   }
 });
+
+//get list of collage name for teacher and student signup
+teacherAuth.get("/getColleges", async (req, res) => {
+  try {
+    const institute = await getAllInstitutions();
+
+    // optional: only verified ones
+    const verifiedInstitutes = institute.filter(
+      (inst) => inst.status === "verified"
+    );
+
+    const instituteData = verifiedInstitutes.map((inst) => ({
+      id: inst.institutionId,          // this is what you will save with teacher
+      name: inst.InstitutionName,      // this is what you will show in UI
+    }));
+    res.status(200).json({ success: true, data: instituteData });
+  } catch (err) {
+    console.error("Error in /getColleges:", err);
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: err.message });
+  }
+});
+
+
 
 module.exports = teacherAuth;
