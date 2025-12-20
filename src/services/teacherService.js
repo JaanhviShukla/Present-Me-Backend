@@ -39,6 +39,7 @@ async function createTeacher(data){
     hotspotName: data.hotspotName,
     passwordHash: hashedPassword,
     institutionId: data.institutionId,
+    type: "teacher",
     status: "pending",
     createdAt: new Date().toISOString()
   };
