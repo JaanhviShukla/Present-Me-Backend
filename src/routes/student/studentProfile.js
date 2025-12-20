@@ -16,7 +16,7 @@ studentProfile.get("/students/profile", studAuth, async (req, res) => {
       return res.status(400).json({ message: "Student ID is required" });
     }
 
-    res.status(200).json({ success: true, data: student.firstName});
+    res.status(200).json({ success: true, data: student});
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: err.message });

@@ -36,6 +36,7 @@ async function createTeacher(data){
     lastName: data.lastName,
     emailId: normalizedEmail,
     phone: data.phone,
+    hotspotName: data.hotspotName,
     passwordHash: hashedPassword,
     institutionId: data.institutionId,
     status: "pending",
@@ -50,6 +51,7 @@ async function createTeacher(data){
   await docClient.send(cmd);
   return item;
 }
+
 
 // Generate 6-digit alphanumeric class code
 const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
