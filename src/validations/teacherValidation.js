@@ -11,8 +11,33 @@ const teacherSignupSchema= Joi.object({
 
 
 });
+
+
+const validatePatchTeacherSchema = Joi.object({
+  firstName: Joi.string().trim().min(2).max(50).optional(),
+
+  lastName: Joi.string().trim().min(2).max(50).optional(),
+
+  emailId: Joi.string().email().optional(),
+
+  phone: Joi.string()
+    .pattern(/^[0-9]{10}$/)
+    .optional(),
+
+  hotspotName: Joi.string().trim().min(1).max(20).optional(),  
+  officeLocation: Joi.string().trim().min(1).max(100).optional(),
+  department: Joi.string().trim().min(1).max(30).optional(),
+  specialization: Joi.string().trim().min(2).max(20).optional(),
+  qualification: Joi.number().integer().min(1).max(20).optional(),
+  experience: Joi.string().trim().min(1).max(10).optional(),
+  empId: Joi.string().trim().max(20).optional(),
+
+}).unknown(true); // must update at least one field
+
+
+
 const teacherLoginSchema= Joi.object({
   emailId: Joi.string().email().required(),
   password: Joi.string().min(6).max(128).required(),
 });
-module.exports={teacherSignupSchema,teacherLoginSchema};
+module.exports={teacherSignupSchema,teacherLoginSchema,validatePatchTeacherSchema};

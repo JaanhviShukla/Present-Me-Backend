@@ -1,5 +1,6 @@
 const express = require("express");
 const tAuth = require("../../middlewares/teacherAuth");
+const { patchTeacherProfile, uploadTeacherProfileImage } = require("../../controllers/teacherController");
 const teacherProfile = express.Router();
 
 teacherProfile.get("/teachers/profile", tAuth, async (req, res) => {
@@ -15,5 +16,12 @@ teacherProfile.get("/teachers/profile", tAuth, async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 });
+
+teacherProfile.patch(
+  "/teachers/profile",
+  tAuth,
+  uploadTeacherProfileImage,  // multer
+  patchTeacherProfile        // controller
+);
 
 module.exports = teacherProfile; 

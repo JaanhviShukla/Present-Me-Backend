@@ -82,7 +82,6 @@ const validatePatchStudentSchema = Joi.object({
 
   bio: Joi.string().trim().max(500).optional(),
 }).unknown(true); // must update at least one field
-  
 
 const validateClassName = Joi.object({
   className: Joi.string().trim().min(2).max(100).required().messages({
@@ -95,14 +94,14 @@ const validatePatchInstitutionSchema = Joi.object({
   firstName: Joi.string().min(2).max(30).optional(),
   lastName: Joi.string().min(2).max(30).optional(),
   emailId: Joi.forbidden().messages({
-    "any.unknown": "Email cannot be updated" ,
+    "any.unknown": "Email cannot be updated",
   }),
   phone: Joi.string().optional(),
   InstitutionName: Joi.string().min(2).max(100).optional(),
   Role: Joi.forbidden().messages({
     "any.unknown": "Role cannot be updated",
   }),
-  bio: Joi.string().max(500).optional().allow(null,""),
+  bio: Joi.string().max(500).optional().allow(null, ""),
   profilePicUrl: Joi.any().optional(),
 }).unknown(true); // Allow file uploads like profilePic
 
