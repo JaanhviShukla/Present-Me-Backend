@@ -10,7 +10,7 @@ teacherProfile.get("/teachers/profile", tAuth, async (req, res) => {
       return res.status(400).json({ message: "Teacher ID is required" });
     }
 
-    res.status(200).json({ success: true, data: teacher.firstName});
+    res.status(200).json({ success: true, data: teacher});
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: err.message });

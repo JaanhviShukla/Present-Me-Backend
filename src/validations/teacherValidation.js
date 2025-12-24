@@ -8,18 +8,13 @@ const teacherSignupSchema= Joi.object({
   institutionId: Joi.string().required(),
   hotspotName: Joi.string().min(2).max(50).required(),
 
-
-
 });
 
 
 const validatePatchTeacherSchema = Joi.object({
   firstName: Joi.string().trim().min(2).max(50).optional(),
-
   lastName: Joi.string().trim().min(2).max(50).optional(),
-
   emailId: Joi.string().email().optional(),
-
   phone: Joi.string()
     .pattern(/^[0-9]{10}$/)
     .optional(),
