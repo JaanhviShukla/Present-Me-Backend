@@ -23,7 +23,7 @@ const validatePatchTeacherSchema = Joi.object({
   officeLocation: Joi.string().trim().min(1).max(100).optional(),
   department: Joi.string().trim().min(1).max(30).optional(),
   specialization: Joi.string().trim().min(2).max(20).optional(),
-  qualification: Joi.number().integer().min(1).max(20).optional(),
+  qualification: Joi.string().trim().min(1).max(20).optional(),
   experience: Joi.string().trim().min(1).max(10).optional(),
   empId: Joi.string().trim().max(20).optional(),
 
