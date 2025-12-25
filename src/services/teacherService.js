@@ -59,13 +59,17 @@ const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789
 const generateClassCode = customAlphabet(alphabet, 6);
 
 
-async function createClass({ className, createdBy }) {
+async function createClass({ className,roomNo,startTime,endTime,classDays,createdBy }) {
   while (true) {
     const classCode = generateClassCode();
 
     const item = {
       classId: "c-" + uuidv4(),
       classCode,   // PK
+      roomNo,
+      startTime,
+      endTime,
+      classDays,
       className,
       createdBy,
       joinRequests: [],
@@ -114,14 +118,25 @@ async function deleteClass(classCode) {
   }
 }
 
-async function updateClassName(classCode, newClassName) {
+async function updateClassName(classCode, newClassName, roomNo, startTime, endTime, classDays) {
   try {
     const cmd = new UpdateCommand({
       TableName: "classes",
       Key: { classCode },
-      UpdateExpression: "SET className = :newName",
+      UpdateExpression: `
+        SET 
+          className = :newName,
+          roomNo = :roomNo,
+          startTime = :startTime,
+          endTime = :endTime,
+          classDays = :classDays
+      `,
       ExpressionAttributeValues: {
-        ":newName": newClassName
+        ":newName": newClassName,
+        ":roomNo": roomNo,
+        ":startTime": startTime,
+        ":endTime": endTime,
+        ":classDays": classDays
       },
       ConditionExpression: "attribute_exists(classCode)" 
       // ✅ ensures the class exists before updating
@@ -131,7 +146,7 @@ async function updateClassName(classCode, newClassName) {
 
     return {
       success: true,
-      message: "Class name updated successfully.",
+      message: "Class details updated successfully.",
     };
   } catch (err) {
     if (err.name === "ConditionalCheckFailedException") {

@@ -29,10 +29,20 @@ teacherClass.post("/teachers/class", tAuth, async (req, res) => {
         .json({ success: false, message: error.details[0].message });
     }
 
-    const { className } = value;
+    const { 
+      className, 
+      roomNo,
+      startTime,
+      endTime,
+      classDays = [],
+      } = value;
 
     const newClass = await createClass({
       className,
+      roomNo,
+      startTime,
+      endTime,
+      classDays,
       createdBy: teacher.teacherId,
     });
 
@@ -71,7 +81,13 @@ teacherClass.patch("/teachers/class/:classCode", tAuth, async (req, res) => {
         .json({ success: false, message: error.details[0].message });
     }
 
-    const { className } = value;
+    const { 
+      className, 
+      roomNo,
+      startTime,
+      endTime,
+      classDays = [],
+     } = value;
 
     if (!classCode) {
       return res.status(400).json({ message: "Class code is not found" });
@@ -80,13 +96,29 @@ teacherClass.patch("/teachers/class/:classCode", tAuth, async (req, res) => {
     if (!className) {
       return res.status(400).json({ message: "Enter the class name" });
     }
+    
+    if (!roomNo) {
+      return res.status(400).json({ message: "Enter the room number" });
+    }
 
-    const updatedClass = await updateClassName(classCode, className);
+    if (!startTime) {
+      return res.status(400).json({ message: "Enter the start time" });
+    }
+
+    if (!endTime) {
+      return res.status(400).json({ message: "Enter the end time" });
+    }
+
+     if (classDays.length === 0) {
+      return res.status(400).json({ message: "Enter the class days" });
+    }
+
+    const updatedClass = await updateClassName(classCode, className, roomNo, startTime, endTime, classDays);
 
     if (updatedClass.success) {
       res
         .status(200)
-        .json({ success: true, data: "New class name is " + className });
+        .json({ success: true, data: updatedClass });
     } else {
       res.status(404).json({ success: false, message: updatedClass.message });
     }

@@ -83,11 +83,45 @@ const validatePatchStudentSchema = Joi.object({
   bio: Joi.string().trim().max(500).optional(),
 }).unknown(true); // must update at least one field
 
+
 const validateClassName = Joi.object({
-  className: Joi.string().trim().min(2).max(100).required().messages({
+  className: Joi.string().trim().min(2).max(50).required().messages({
     "string.empty": "Class name is required",
     "string.min": "Class name must be at least 2 characters long",
   }),
+  roomNo: Joi.string().trim().min(1).max(20).required().messages({
+    "string.empty": "Room number is required",
+  }),
+  startTime: Joi.string()
+    .pattern(/^([01]\d|2[0-3]):([0-5]\d)$/)
+    .required()
+    .messages({
+      "string.empty": "Start time is required",
+      "string.pattern.base": "Start time must be in HH:mm format (24-hour)",
+    }),
+
+  endTime: Joi.string()
+    .pattern(/^([01]\d|2[0-3]):([0-5]\d)$/)
+    .required()
+    .messages({
+      "string.empty": "End time is required",
+      "string.pattern.base": "End time must be in HH:mm format (24-hour)",
+    }),
+  classDays: Joi.array()
+    .items(Joi.string().valid(
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+      "Sunday"
+    ))
+    .min(1)
+    .required()
+    .messages({
+      "array.min": "At least one class day is required",
+    }),
 });
 
 const validatePatchInstitutionSchema = Joi.object({
