@@ -6,7 +6,7 @@
      -/students/signup
      -/students/signin
      -/students/logout
-     -/students/prfile
+     -/students/profile
      -/students/change-password
      
      -/students/joinRequests

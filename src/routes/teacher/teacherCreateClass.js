@@ -151,7 +151,7 @@ teacherClass.patch("/teachers/approve-student",tAuth,async(req,res)=>{
     const teacherId=req.teacherId.teacherId;
 
     if(!classCode || !studentId){
-      return res.status(400).json({message:"classId and studentId are required"});
+      return res.status(400).json({message:"classCode and studentId are required"});
     }
 
     //Fetch class details

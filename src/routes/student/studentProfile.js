@@ -24,47 +24,13 @@ studentProfile.get("/students/profile", studAuth, async (req, res) => {
 });
 
 
-studentProfile.patch(
-  "/students/profile",
+studentProfile.patch("/students/profile",
   studAuth,
   uploadStudentProfileImage,  // multer
   patchStudentProfile         // controller
 );
 
-studentProfile.get("/students/enrolledClasses",studAuth, async(req,res)=>{
-  try{
-    const student= req.student;
 
-    const studentId= student.studentId;
-
-    if(!studentId){
-      return res.status(400).json({ message: "Student ID is required" });
-    }
-    //scan all classes
-    const response=await client.send(new ScanCommand({
-      TableName:TABLE_NAME,
-    }));
-
-    const classes=response.Items || [];
-    //filter classes where student exist in students array
-    const joinedClasses= classes.filter(cls => cls.students?.includes(studentId)).map(cls => ({
-      classCode:cls.classCode,
-      className:cls.className,
-      createdBy:cls.createdBy,
-    }));
-
-    return res.status(200).json({
-      message:"joined classes fetched successfully",
-      studentId,
-      joinedClasses
-    });
-
-  }catch(error){
-    console.error("error fetching enrolled classes:",error);
-    return res.status(500).json({ success: false, message: error.message });
-  }
-
-});
 
 
 

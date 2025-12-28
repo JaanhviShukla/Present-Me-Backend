@@ -14,8 +14,7 @@ const studentProfile = require("./routes/student/studentProfile");
 const adminRouter = require("./routes/admin/updateTeacStatus");
 const teacherProfile = require("./routes/teacher/teacherProfile");
 const teacherClass = require("./routes/teacher/teacherCreateClass");
-const studentJoin = require("./routes/student/studentJoinRequest");
-const studentViewJoin = require("./routes/student/studentViewJoinRequests");
+const studentClass = require("./routes/student/studentClasses");
 
 const app = express();
 const cors = require("cors");
@@ -42,8 +41,7 @@ app.use("/", studentProfile);
 app.use("/", adminRouter);
 app.use("/", teacherProfile);
 app.use("/", teacherClass);
-app.use("/", studentJoin);
-app.use("/", studentViewJoin);
+app.use("/", studentClass);
 
 // Mount routes
 // app.use('/api/institutions', institutionRoutes);
