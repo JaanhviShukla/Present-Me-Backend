@@ -65,7 +65,7 @@ async function createClass({ className,roomNo,startTime,endTime,classDays,create
 
     const item = {
       classId: "c-" + uuidv4(),
-      classCode,   // PK
+      classCode,    // PK
       roomNo,
       startTime,
       endTime,
