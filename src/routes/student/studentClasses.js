@@ -1,9 +1,17 @@
 const express = require("express");
 const studAuth = require("../../middlewares/student_auth");
-const{ addJoinRequest}= require("../../services/studentService");
+const {
+  addJoinRequest,
+  getStudentJoinRequests,
+  getStudentEnrollClasses,
+  
+} = require("../../services/studentService");
 const { GetCommand } = require("@aws-sdk/lib-dynamodb");
 const studentClass = express.Router();
 const { docClient } = require("../../dynamoDb");
+const { ScanCommand } = require("@aws-sdk/client-dynamodb");
+
+const TABLE_NAME = "classes";
 
 studentClass.post("/students/joinRequests", studAuth, async (req, res) => {
   try {
@@ -18,35 +26,36 @@ studentClass.post("/students/joinRequests", studAuth, async (req, res) => {
       return res.status(400).json({ error: "Class code is required" });
     }
 
-
-    const getCmd= new GetCommand({
-      TableName:"classes",
-      Key:{ classCode },
+    const getCmd = new GetCommand({
+      TableName: "classes",
+      Key: { classCode },
     });
-    const result= await docClient.send(getCmd);
+    const result = await docClient.send(getCmd);
 
     if (!result.Item) {
-      return res.status(404).json({ error: "Class not found" });
+      return res.status(404).json({ error: "Class Code is Incorrect" });
     }
 
     const classItem = result.Item;
 
     //check if student already requested to join
-    if(classItem.joinRequests && classItem.joinRequests.includes(student.studentId)){
+    if (
+      classItem.joinRequests &&
+      classItem.joinRequests.includes(student.studentId)
+    ) {
       return res.status(400).json({ error: "Join request already sent" });
     }
 
-    await addJoinRequest(classCode,student.studentId);
+    await addJoinRequest(classCode, student.studentId);
 
-    return res.status(200).json({ success: true, message: "Join request sent successfully." }); 
-
-   }catch (err) {
+    return res
+      .status(200)
+      .json({ success: true, message: "Join request sent successfully." });
+  } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: err.message });
   }
 });
-
-
 
 studentClass.get("/students/ViewJoinRequests", studAuth, async (req, res) => {
   try {
@@ -54,6 +63,8 @@ studentClass.get("/students/ViewJoinRequests", studAuth, async (req, res) => {
     if (!student) {
       return res.status(400).json({ message: "Student ID is required" });
     }
+    
+
     const classes = await getStudentJoinRequests(student.studentId);
 
     if (!classes || classes.length === 0) {
@@ -70,40 +81,29 @@ studentClass.get("/students/ViewJoinRequests", studAuth, async (req, res) => {
   }
 });
 
+studentClass.get("/students/enrolledClasses", studAuth, async (req, res) => {
+  try {
+    const studentId = req.student?.studentId;
 
-studentClass.get("/students/enrolledClasses",studAuth, async(req,res)=>{
-  try{
-    const student= req.student;
-
-    const studentId= student.studentId;
-
-    if(!studentId){
+    if (!studentId) {
       return res.status(400).json({ message: "Student ID is required" });
     }
-    //scan all classes
-    const response=await client.send(new ScanCommand({
-      TableName:TABLE_NAME,
-    }));
 
-    const classes=response.Items || [];
-    //filter classes where student exist in students array
-    const joinedClasses= classes.filter(cls => cls.students?.includes(studentId)).map(cls => ({
-      classCode:cls.classCode,
-      className:cls.className,
-      createdBy:cls.createdBy,
-    }));
-
+    const result = await getStudentEnrollClasses(studentId);
+    
     return res.status(200).json({
-      message:"joined classes fetched successfully",
-      studentId,
-      joinedClasses
+      success: true,
+      total: result.length,
+      data: result,
     });
-
-  }catch(error){
-    console.error("error fetching enrolled classes:",error);
-    return res.status(500).json({ success: false, message: error.message });
+  } catch (error) {
+    console.error("error fetching enrolled classes:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
-
 });
+
 
 module.exports = studentClass;

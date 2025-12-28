@@ -100,6 +100,30 @@ async function getStudentJoinRequests(studentId){
   }
 }
 
+async function getStudentEnrollClasses(studentId){
+  try{ 
+    const scanParams={
+      TableName:"classes",
+      ProjectionExpression:"classCode,className,createdBy,students",
+    };
+
+    const result= await docClient.send(new ScanCommand(scanParams));
+
+    const requestedClasses=result.Items.filter(
+      (cls)=>cls.students && cls.students.includes(studentId)
+    ).map((cls)=>({
+      classCode:cls.classCode,
+      className:cls.className,
+      createdBy:cls.createdBy,  
+    }));
+
+    return requestedClasses;
+
+  }catch(err){
+    throw new Error("Failed to get join requests: " + err.message);
+  }
+}
+
 async function updateStudentProfile(id, updateFields) {
   const expressionParts = [];
   const expressionValues = {};
@@ -127,4 +151,4 @@ async function updateStudentProfile(id, updateFields) {
 }
 
 
-module.exports={createStudent,addJoinRequest,getStudentJoinRequests, updateStudentProfile};
+module.exports={createStudent,addJoinRequest,getStudentJoinRequests, updateStudentProfile,getStudentEnrollClasses};
