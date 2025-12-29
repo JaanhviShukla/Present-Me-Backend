@@ -1,4 +1,4 @@
-const { PutCommand,UpdateCommand ,ScanCommand} = require("@aws-sdk/lib-dynamodb");
+const { PutCommand,UpdateCommand ,ScanCommand, GetCommand} = require("@aws-sdk/lib-dynamodb");
 const { findByEmail, findById } = require("./awsService");
 const {v4:uuidv4}= require('uuid');
 const bcrypt = require("bcrypt");
@@ -8,6 +8,18 @@ const{docClient}= require('../dynamoDb');
 const SALT_ROUNDS=10;
 const TABLE_NAME="students";
 const CLASS_TABLE="classes";
+
+async function getTeacherById(teacherId) {
+  const result = await docClient.send(
+    new GetCommand({
+      TableName: "teachers",
+      Key: { teacherId },
+      ProjectionExpression: "teacherId, firstName, lastName",
+    })
+  );
+
+  return result.Item;
+}
 
 
 async function createStudent({firstName,lastName,emailId,phone,institutionId,password,rollNo}){
@@ -104,18 +116,34 @@ async function getStudentEnrollClasses(studentId){
   try{ 
     const scanParams={
       TableName:"classes",
-      ProjectionExpression:"classCode,className,createdBy,students",
+      ProjectionExpression:"classCode,className,createdBy, roomNo, classDays, startTime, endTime, students",
     };
 
     const result= await docClient.send(new ScanCommand(scanParams));
 
-    const requestedClasses=result.Items.filter(
-      (cls)=>cls.students && cls.students.includes(studentId)
-    ).map((cls)=>({
-      classCode:cls.classCode,
-      className:cls.className,
-      createdBy:cls.createdBy,  
-    }));
+    // 1️⃣ Filter enrolled classes
+    const enrolledClasses = result.Items.filter(
+      (cls) => Array.isArray(cls.students) && cls.students.includes(studentId)
+    );
+
+    // Attach teacher name
+    const requestedClasses = await Promise.all(
+      enrolledClasses.map(async (cls) => {
+        const teacher = await getTeacherById(cls.createdBy);
+
+        return {
+          classCode: cls.classCode,
+          className: cls.className,
+          classDays: cls.classDays,
+          startTime: cls.startTime,
+          endTime: cls.endTime,
+          roomNo: cls.roomNo,
+          teacherId: cls.createdBy,
+          teacherName: teacher ? `${teacher.firstName} ${teacher.lastName}` : "Unknown",
+        };
+      })
+    );
+    
 
     return requestedClasses;
 
