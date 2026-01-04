@@ -92,18 +92,30 @@ async function getStudentJoinRequests(studentId){
   try{ 
     const scanParams={
       TableName:"classes",
-      ProjectionExpression:"classCode,className,createdBy, joinRequests",
+      ProjectionExpression:"classCode,className,createdBy,roomNo,joinRequests",
     };
 
     const result= await docClient.send(new ScanCommand(scanParams));
 
-    const requestedClasses=result.Items.filter(
-      (cls)=>cls.joinRequests && cls.joinRequests.includes(studentId)
-    ).map((cls)=>({
-      classCode:cls.classCode,
-      className:cls.className,
-      createdBy:cls.createdBy,  
-    }));
+    // 1️⃣ Filter enrolled classes
+    const enrolledClasses = result.Items.filter(
+      (cls) => Array.isArray(cls.joinRequests) && cls.joinRequests.includes(studentId)
+    );
+
+    // Attach teacher name
+    const requestedClasses = await Promise.all(
+      enrolledClasses.map(async (cls) => {
+        const teacher = await getTeacherById(cls.createdBy);
+
+        return {
+          classCode: cls.classCode,
+          className: cls.className,
+          roomNo: cls.roomNo,
+          teacherId: cls.createdBy,
+          teacherName: teacher ? `${teacher.firstName} ${teacher.lastName}` : "Unknown",
+        };
+      })
+    );
 
     return requestedClasses;
 
