@@ -9,7 +9,7 @@ const {
 const { GetCommand } = require("@aws-sdk/lib-dynamodb");
 const studentClass = express.Router();
 const { docClient } = require("../../dynamoDb");
-const { ScanCommand } = require("@aws-sdk/client-dynamodb");
+
 
 const TABLE_NAME = "classes";
 
@@ -26,6 +26,10 @@ studentClass.post("/students/joinRequests", studAuth, async (req, res) => {
       return res.status(400).json({ error: "Class code is required" });
     }
 
+    if (classCode.length !== 6) {
+      return res.status(400).json({ error: "Class code must be 6 Digits" });
+    }
+
     const getCmd = new GetCommand({
       TableName: "classes",
       Key: { classCode },
@@ -38,6 +42,14 @@ studentClass.post("/students/joinRequests", studAuth, async (req, res) => {
 
     const classItem = result.Item;
 
+    //check if student already joined the class
+    if (
+      classItem.students &&
+      classItem.students.includes(student.studentId)
+    ) {
+      return res.status(400).json({ error: "Already joined the class" });
+    }
+
     //check if student already requested to join
     if (
       classItem.joinRequests &&
@@ -45,6 +57,7 @@ studentClass.post("/students/joinRequests", studAuth, async (req, res) => {
     ) {
       return res.status(400).json({ error: "Join request already sent" });
     }
+    
 
     await addJoinRequest(classCode, student.studentId);
 
