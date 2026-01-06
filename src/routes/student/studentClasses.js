@@ -6,7 +6,7 @@ const {
   getStudentEnrollClasses,
   
 } = require("../../services/studentService");
-const { GetCommand } = require("@aws-sdk/lib-dynamodb");
+const { GetCommand, UpdateCommand } = require("@aws-sdk/lib-dynamodb");
 const studentClass = express.Router();
 const { docClient } = require("../../dynamoDb");
 
@@ -115,6 +115,56 @@ studentClass.get("/students/enrolledClasses", studAuth, async (req, res) => {
       success: false,
       message: error.message,
     });
+  }
+});
+
+studentClass.patch("/students/leaveClass", studAuth, async (req, res) => {
+  try {
+    const studentId = req.student?.studentId;
+    const { classCode } = req.body;
+
+    if (!studentId) {
+      return res.status(400).json({ message: "Student ID is required" });
+    }
+
+    if (!classCode) {
+      return res.status(400).json({ message: "Class code is required" });
+    }
+
+    const getCmd = new GetCommand({
+      TableName: TABLE_NAME,
+      Key: { classCode },
+    });
+    const result = await docClient.send(getCmd);
+
+    if (!result.Item) {
+      return res.status(404).json({ message: "Class not found" });
+    }
+
+    const classItem = result.Item;
+
+    if (!classItem.joinRequests || !classItem.joinRequests.includes(studentId)) {
+      return res.status(400).json({ message: "Student request is not for this class" });
+    }
+
+    // Remove student from the class
+    classItem.joinRequests = classItem.joinRequests.filter(id => id !== studentId);
+
+    const updateCmd = {
+      TableName: TABLE_NAME,
+      Key: { classCode },
+      UpdateExpression: "SET joinRequests = :joinRequests",
+      ExpressionAttributeValues: {
+        ":joinRequests": classItem.joinRequests,
+      },
+    };
+
+    await docClient.send(new UpdateCommand(updateCmd));
+
+    return res.status(200).json({ success: true, message: "Left the class successfully." });
+  } catch (error) {
+    console.error("Error leaving class:", error);
+    return res.status(500).json({ success: false, message: error.message });
   }
 });
 

@@ -171,7 +171,7 @@ teacherClass.patch("/teachers/approve-student",tAuth,async(req,res)=>{
 
     //check if studentId is in joinRequests
     if(!joinRequests.includes(studentId)){
-      return res.status(400).json({message:"student not found in join request"});
+      return res.status(400).json({message:"Student not found in join request"});
     }
     //Remove studentId from joinRequests and add to students
     joinRequests.splice(joinRequests.indexOf(studentId),1);
