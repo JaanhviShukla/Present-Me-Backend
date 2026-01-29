@@ -1,38 +1,43 @@
 //created for dynamodb operations related to teachers
-const {PutCommand, QueryCommand, DeleteCommand, UpdateCommand, ScanCommand}= require("@aws-sdk/lib-dynamodb");
-const {docClient}= require('../dynamoDb');
-const {findByEmail,findById}= require("./awsService");
-const {v4:uuidv4}= require('uuid');
+const {
+  PutCommand,
+  QueryCommand,
+  DeleteCommand,
+  UpdateCommand,
+  ScanCommand,
+} = require("@aws-sdk/lib-dynamodb");
+const { docClient } = require("../dynamoDb");
+const { findByEmail, findById } = require("./awsService");
+const { v4: uuidv4 } = require("uuid");
 const bcrypt = require("bcrypt");
-const { customAlphabet } = require('nanoid');
+const { customAlphabet } = require("nanoid");
 
+const TABLE_NAME = "teachers";
 
-const TABLE_NAME="teachers";
-
-
-
-
-async function createTeacher(data){
-
-  const normalizedEmail=data.emailId.toLowerCase();
+async function createTeacher(data) {
+  const normalizedEmail = data.emailId.toLowerCase();
   //1) check duplicate
   const existing = await findByEmail(normalizedEmail, "teachers");
-  if(existing){
+  if (existing) {
     const err = new Error("Email already exists");
-    err.code="DUPLICATE_EMAIL";
+    err.code = "DUPLICATE_EMAIL";
     throw err;
   }
 
-  const hashedPassword = await bcrypt.hash(data.password,10);
+  const hashedPassword = await bcrypt.hash(data.password, 10);
 
-  const institution = await findById(data.institutionId, "Institutions", "institutionId");
+  const institution = await findById(
+    data.institutionId,
+    "Institutions",
+    "institutionId"
+  );
   if (!institution) {
     throw new Error("Invalid institutionId — no such institution found.");
   }
 
-  const item={
-    teacherId:"t-"+uuidv4(),
-    firstName: data.firstName,  
+  const item = {
+    teacherId: "t-" + uuidv4(),
+    firstName: data.firstName,
     lastName: data.lastName,
     emailId: normalizedEmail,
     phone: data.phone,
@@ -41,31 +46,37 @@ async function createTeacher(data){
     institutionId: data.institutionId,
     type: "teacher",
     status: "pending",
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
   };
 
-  const cmd= new PutCommand({
+  const cmd = new PutCommand({
     TableName: TABLE_NAME,
     Item: item,
-    ConditionExpression: "attribute_not_exists(emailId)" //prevent overwrite if email exists
+    ConditionExpression: "attribute_not_exists(emailId)", //prevent overwrite if email exists
   });
   await docClient.send(cmd);
   return item;
 }
 
-
 // Generate 6-digit alphanumeric class code
-const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+const alphabet =
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 const generateClassCode = customAlphabet(alphabet, 6);
 
-
-async function createClass({ className,roomNo,startTime,endTime,classDays,createdBy }) {
+async function createClass({
+  className,
+  roomNo,
+  startTime,
+  endTime,
+  classDays,
+  createdBy,
+}) {
   while (true) {
     const classCode = generateClassCode();
 
     const item = {
       classId: "c-" + uuidv4(),
-      classCode,    // PK
+      classCode, // PK
       roomNo,
       startTime,
       endTime,
@@ -82,7 +93,7 @@ async function createClass({ className,roomNo,startTime,endTime,classDays,create
         new PutCommand({
           TableName: "classes",
           Item: item,
-          ConditionExpression: "attribute_not_exists(classCode)" 
+          ConditionExpression: "attribute_not_exists(classCode)",
         })
       );
 
@@ -101,9 +112,9 @@ async function deleteClass(classCode) {
   const deleteCmd = new DeleteCommand({
     TableName: "classes",
     Key: {
-      classCode: classCode
+      classCode: classCode,
     },
-    ConditionExpression: "attribute_exists(classCode)" 
+    ConditionExpression: "attribute_exists(classCode)",
     // ✅ ensures an error is thrown if class does NOT exist
   });
 
@@ -118,7 +129,14 @@ async function deleteClass(classCode) {
   }
 }
 
-async function updateClassName(classCode, newClassName, roomNo, startTime, endTime, classDays) {
+async function updateClassName(
+  classCode,
+  newClassName,
+  roomNo,
+  startTime,
+  endTime,
+  classDays
+) {
   try {
     const cmd = new UpdateCommand({
       TableName: "classes",
@@ -136,9 +154,9 @@ async function updateClassName(classCode, newClassName, roomNo, startTime, endTi
         ":roomNo": roomNo,
         ":startTime": startTime,
         ":endTime": endTime,
-        ":classDays": classDays
+        ":classDays": classDays,
       },
-      ConditionExpression: "attribute_exists(classCode)" 
+      ConditionExpression: "attribute_exists(classCode)",
       // ✅ ensures the class exists before updating
     });
 
@@ -165,17 +183,16 @@ async function getClassesByTeacher(teacherId) {
       TableName: "classes",
       FilterExpression: "createdBy = :teacherId",
       ExpressionAttributeValues: {
-        ":teacherId": teacherId
-      }
+        ":teacherId": teacherId,
+      },
     });
 
     const result = await docClient.send(scanCmd);
 
     return {
       success: true,
-      classes: result.Items || []
+      classes: result.Items || [],
     };
-
   } catch (err) {
     console.error(err);
     throw err;
@@ -216,5 +233,50 @@ async function updateTeacherProfile(id, updateFields) {
   return result.Attributes;
 }
 
+// Get verified teachers
+async function getVerifiedTeachers(institutionId) {
+  const cmd = new ScanCommand({
+    TableName: TABLE_NAME,
+    FilterExpression: "#status = :verified AND institutionId = :institutionId",
+    ExpressionAttributeNames: {
+      "#status": "status",
+    },
+    ExpressionAttributeValues: {
+      ":verified": "verified",
+      ":institutionId": institutionId,
+    },
+  });
 
-module.exports={createTeacher, createClass, deleteClass, updateClassName, getClassesByTeacher, getAllInstitutions, updateTeacherProfile};
+  const res = await docClient.send(cmd);
+  return res.Items || [];
+}
+
+// Get pending teachers
+async function getPendingTeachers(institutionId) {
+  const cmd = new ScanCommand({
+    TableName: TABLE_NAME,
+    FilterExpression: "#status = :pending AND institutionId = :institutionId",
+    ExpressionAttributeNames: {
+      "#status": "status",
+    },
+    ExpressionAttributeValues: {
+      ":pending": "pending",
+      ":institutionId": institutionId,
+    },
+  });
+
+  const res = await docClient.send(cmd);
+  return res.Items || [];
+}
+
+module.exports = {
+  createTeacher,
+  createClass,
+  deleteClass,
+  updateClassName,
+  getClassesByTeacher,
+  getAllInstitutions,
+  updateTeacherProfile,
+  getVerifiedTeachers,
+  getPendingTeachers,
+};

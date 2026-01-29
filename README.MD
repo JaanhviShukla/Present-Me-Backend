@@ -12,6 +12,8 @@
      -/students/joinRequests
      -/students/ViewJoinRequest
      -/students/enrolledClasses   (students can see the classes in which it is enrolled)
+     -/students/leaveClass
+     
 
 
   2=> Teachers 
@@ -41,8 +43,9 @@
      -/admin/logout
      -/admin/dashboard
      -admin/change-password
-
      -admin/profile  (patch api to update profile)
+     -/admin/pendingTeachers                       (29/01/2026)
+     -/admin/pendingTeachers
 
 
 

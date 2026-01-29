@@ -4,6 +4,7 @@ const dashboardrouter = express.Router();
 //const router = require("./auth");
 const instituteAuth = require("../../middlewares/instituteAuth");
 const { uploadProfileImage, patchInstitutionProfile } = require("../../controllers/institutionUpdateController");
+const { getVerifiedTeachers, getPendingTeachers } = require("../../services/teacherService");
 
 dashboardrouter.get("/admin/profile", instituteAuth, (req, res) => {
   console.log(req.institute);
@@ -12,5 +13,29 @@ dashboardrouter.get("/admin/profile", instituteAuth, (req, res) => {
 
 
 dashboardrouter.patch("/admin/profile",instituteAuth,uploadProfileImage,patchInstitutionProfile);
+
+// Get all verified teachers
+dashboardrouter.get("/admin/approvedTeachers", instituteAuth, async (req, res) => {
+  try {
+    const institutionId = req.institute.institutionId
+    const approvedTeachers = await getVerifiedTeachers(institutionId)
+    res.status(200).json({ success: true, data: approvedTeachers });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Get all pending teachers
+dashboardrouter.get("/admin/pendingTeachers", instituteAuth, async (req, res) => {
+  try {
+    const institutionId = req.institute.institutionId
+    const pendingTeachers = await getPendingTeachers(institutionId)
+    res.status(200).json({ success: true, data: pendingTeachers });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
 
 module.exports = dashboardrouter;
