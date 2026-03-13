@@ -145,57 +145,72 @@ teacherClass.get("/teachers/class", tAuth, async (req, res) => {
 });
 
 
-teacherClass.patch("/teachers/approve-student",tAuth,async(req,res)=>{
-  try{
-    const{classCode,studentId}=req.body;
-    const teacherId=req.teacherId.teacherId;
+teacherClass.patch("/teachers/handle-student-request", tAuth, async (req, res) => {
+  try {
+    const { classCode, studentId, action } = req.body;
+    const teacherId = req.teacherId.teacherId;
 
-    if(!classCode || !studentId){
-      return res.status(400).json({message:"classCode and studentId are required"});
+    if (!classCode || !studentId || !action) {
+      return res.status(400).json({ message: "classCode, studentId and action are required" });
     }
 
-    //Fetch class details
-    const classData= await client.send(new GetCommand({
-      TableName:TABLE_NAME,
-      Key:{classCode}
+    if (!["approve", "reject"].includes(action)) {
+      return res.status(400).json({ message: "Invalid action" });
+    }
+
+    // Fetch class
+    const classData = await client.send(new GetCommand({
+      TableName: TABLE_NAME,
+      Key: { classCode }
     }));
-    if(!classData.Item){
-      return res.status(404).json({message:"Class not found"});
-    }
-    if(classData.Item.createdBy !== teacherId){
-      return res.status(403).json({message:"Unauthorized action"});
+
+    if (!classData.Item) {
+      return res.status(404).json({ message: "Class not found" });
     }
 
-    const joinRequests= classData.Item.joinRequests || [];
-    const students= classData.Item.students || [];
-
-    //check if studentId is in joinRequests
-    if(!joinRequests.includes(studentId)){
-      return res.status(400).json({message:"Student not found in join request"});
+    if (classData.Item.createdBy !== teacherId) {
+      return res.status(403).json({ message: "Unauthorized action" });
     }
-    //Remove studentId from joinRequests and add to students
-    joinRequests.splice(joinRequests.indexOf(studentId),1);
 
-    if(!students.includes(studentId)){
-      students.push(studentId);}
-    
-  
-    //Update class record
+    const joinRequests = classData.Item.joinRequests || [];
+    const students = classData.Item.students || [];
+
+    if (!joinRequests.includes(studentId)) {
+      return res.status(400).json({ message: "Student not found in join requests" });
+    }
+
+    // Remove student from joinRequests
+    const updatedJoinRequests = joinRequests.filter(id => id !== studentId);
+
+    let updatedStudents = students;
+
+    // If approve → add to students list
+    if (action === "approve" && !students.includes(studentId)) {
+      updatedStudents = [...students, studentId];
+    }
+
+    // Update database
     await client.send(new UpdateCommand({
-      TableName:TABLE_NAME,
-      Key:{classCode},
-      UpdateExpression:"SET joinRequests=:jr, students=:st",
-      ExpressionAttributeValues:{
-        ":jr":joinRequests,
-        ":st":students,
-},}));
+      TableName: TABLE_NAME,
+      Key: { classCode },
+      UpdateExpression: "SET joinRequests = :jr, students = :st",
+      ExpressionAttributeValues: {
+        ":jr": updatedJoinRequests,
+        ":st": updatedStudents
+      },
+    }));
+
     return res.status(200).json({
-      message:"Student approved successfully",
-      approvedStudent: studentId,
-      classCode,
+      message: action === "approve"
+          ? "Student approved successfully"
+          : "Student request rejected successfully",
+      studentId,
+      classCode
     });
-  }catch(error){
-    console.error("Error approving student",error);
+
+  } catch (error) {
+    console.error("Error handling student request:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 });
 
