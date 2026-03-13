@@ -29,6 +29,8 @@
      -/teachers/class/:classCode                   DELETE -> to delete the class
      -/teachers/class/:classCode                   PATCH -> edit the class name
      -/teachers/class   GET -> get all class of login teacher
+     -/teachers/class/:classCode/joinedStudentsList   (get list of all the student who joined the class)
+     -/teachers/class/:classCode/pendingStudentsList (get list of all the student who request to join the class)
      
      -/teachers/approve-student   (teacher approved student, student go from joinRequest array to students array)    
 

@@ -199,5 +199,85 @@ teacherClass.patch("/teachers/approve-student",tAuth,async(req,res)=>{
   }
 });
 
+teacherClass.get("/teachers/class/:classCode/pendingStudentsList", tAuth, async (req, res) => {
+  try {
+    const { classCode } = req.params;
+    const teacherId = req.teacherId.teacherId;
+
+    if (!classCode) {
+      return res.status(400).json({ message: "Class code is required" });
+    }
+
+    // Fetch class details
+    const classData = await client.send(new GetCommand({
+      TableName: TABLE_NAME,
+      Key: { classCode }
+    }));
+
+    if (!classData.Item) {
+      return res.status(404).json({ message: "Class not found" });
+    }
+
+    if (classData.Item.createdBy !== teacherId) {
+      return res.status(403).json({ message: "Unauthorized access" });
+    }
+
+    const students = classData.Item.joinRequests || [];
+    //get student details for each studentId in students array
+    const studentDetails = await Promise.all(students.map(async (studentId) => {
+      //fetch student details from students table using studentId
+      const studentData = await client.send(new GetCommand({
+        TableName: "students",
+        Key: { studentId }
+      }));
+      return studentData.Item;
+    }));
+    return res.status(200).json({ students: studentDetails });
+  } catch (error) {
+    console.error("Error fetching students", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+teacherClass.get("/teachers/class/:classCode/joinedStudentsList", tAuth, async (req, res) => {
+  try {
+    const { classCode } = req.params;
+    const teacherId = req.teacherId.teacherId;
+
+    if (!classCode) {
+      return res.status(400).json({ message: "Class code is required" });
+    }
+
+    // Fetch class details
+    const classData = await client.send(new GetCommand({
+      TableName: TABLE_NAME,
+      Key: { classCode }
+    }));
+
+    if (!classData.Item) {
+      return res.status(404).json({ message: "Class not found" });
+    }
+
+    if (classData.Item.createdBy !== teacherId) {
+      return res.status(403).json({ message: "Unauthorized access" });
+    }
+
+    const students = classData.Item.students || [];
+    //get student details for each studentId in students array
+    const studentDetails = await Promise.all(students.map(async (studentId) => {
+      //fetch student details from students table using studentId
+      const studentData = await client.send(new GetCommand({
+        TableName: "students",
+        Key: { studentId }
+      }));
+      return studentData.Item;
+    }));
+    return res.status(200).json({ students: studentDetails });
+  } catch (error) {
+    console.error("Error fetching students", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 
 module.exports = teacherClass;
