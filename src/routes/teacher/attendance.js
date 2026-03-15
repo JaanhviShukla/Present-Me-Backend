@@ -59,27 +59,44 @@ attendance.post("/teachers/mark-attendance",tAuth, async (req, res) => {
   }
 });
 
-attendance.get("/teachers/attendance-status/:classCode", tAuth, async (req, res) => {
+attendance.get(
+  "/teachers/attendance-status/:classCode",
+  tAuth,
+  async (req, res) => {
+    try {
 
-  const { classCode } = req.params;
+      const { classCode } = req.params;
 
-  const today = new Date().toISOString().split("T")[0];
+      const today = new Date().toISOString().split("T")[0];
 
-  const params = {
-    TableName: TABLE_NAME,
-    Key: {
-      classCode,
-      date: today
+      const params = {
+        TableName: "attendance",
+        Key: {
+          classCode,
+          date: today
+        }
+      };
+
+      const data = await dynamo.send(new GetCommand(params));
+
+      if (!data.Item) {
+        return res.json({
+          submitted: false,
+          attendance: []
+        });
+      }
+
+      return res.json({
+        submitted: true,
+        attendance: data.Item.attendance
+      });
+
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Error fetching attendance status" });
     }
-  };
-
-  const data = await dynamo.send(new GetCommand(params));
-
-  res.json({
-    submitted: data.Item ? true : false
-  });
-
-});
+  }
+);
 
 
 module.exports = attendance;
