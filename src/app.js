@@ -18,6 +18,7 @@ const studentClass = require("./routes/student/studentClasses");
 
 const app = express();
 const cors = require("cors");
+const attendance = require("./routes/teacher/attendance");
 
 // Middleware
 app.use(cors(
@@ -42,6 +43,7 @@ app.use("/", adminRouter);
 app.use("/", teacherProfile);
 app.use("/", teacherClass);
 app.use("/", studentClass);
+app.use("/", attendance);
 
 // Mount routes
 // app.use('/api/institutions', institutionRoutes);
