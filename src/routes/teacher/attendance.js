@@ -12,7 +12,31 @@ const TABLE_NAME = "attendance";
 attendance.post("/teachers/mark-attendance",tAuth, async (req, res) => {
   try {
 
-    const { classCode, date, attendance } = req.body;
+    const { classCode, date, attendance, teacherId } = req.body;
+
+    if (!classCode || !date || !attendance) {
+      return res.status(400).json({ message: "classCode, date and attendance are required" });
+    }
+    if (teacherId !== req.teacherId.teacherId) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    // Check if attendance already exists
+    const checkParams = {
+      TableName: TABLE_NAME,
+      Key: {
+        classCode,
+        date
+      }
+    };
+
+    const existing = await dynamo.send(new GetCommand(checkParams));
+
+    if (existing.Item) {
+      return res.status(400).json({
+        message: "Attendance already submitted for today"
+      });
+    }
 
     const params = {
       TableName: "attendance",
@@ -35,6 +59,31 @@ attendance.post("/teachers/mark-attendance",tAuth, async (req, res) => {
     console.error(error);
     res.status(500).json({ message: "Error saving attendance" });
   }
+});
+
+
+
+
+attendance.get("/teachers/attendance-status/:classCode", tAuth, async (req, res) => {
+
+  const { classCode } = req.params;
+
+  const today = new Date().toISOString().split("T")[0];
+
+  const params = {
+    TableName: TABLE_NAME,
+    Key: {
+      classCode,
+      date: today
+    }
+  };
+
+  const data = await dynamo.send(new GetCommand(params));
+
+  res.json({
+    submitted: data.Item ? true : false
+  });
+
 });
 
 module.exports = attendance;
