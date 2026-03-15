@@ -59,5 +59,27 @@ attendance.post("/teachers/mark-attendance",tAuth, async (req, res) => {
   }
 });
 
+attendance.get("/teachers/attendance-status/:classCode", tAuth, async (req, res) => {
+
+  const { classCode } = req.params;
+
+  const today = new Date().toISOString().split("T")[0];
+
+  const params = {
+    TableName: TABLE_NAME,
+    Key: {
+      classCode,
+      date: today
+    }
+  };
+
+  const data = await dynamo.send(new GetCommand(params));
+
+  res.json({
+    submitted: data.Item ? true : false
+  });
+
+});
+
 
 module.exports = attendance;
