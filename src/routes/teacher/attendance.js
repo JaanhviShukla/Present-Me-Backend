@@ -98,5 +98,62 @@ attendance.get(
   }
 );
 
+attendance.get(
+  "/teachers/student-attendance/:classCode/:studentId",
+  tAuth,
+  async (req, res) => {
+
+    try {
+
+      const { classCode, studentId } = req.params;
+
+      const params = {
+        TableName: "attendance",
+        KeyConditionExpression: "classCode = :c",
+        ExpressionAttributeValues: {
+          ":c": classCode
+        }
+      };
+
+      const data = await dynamo.send(new QueryCommand(params));
+
+      const records = data.Items || [];
+
+      const studentAttendance = [];
+
+      for (const record of records) {
+
+        const student = record.attendance.find(
+          s => s.studentId === studentId
+        );
+
+        if (student) {
+          studentAttendance.push({
+            date: record.date,
+            status: student.status
+          });
+        }
+
+      }
+
+      res.json({
+        classCode,
+        studentId,
+        attendance: studentAttendance
+      });
+
+    } catch (error) {
+
+      console.error(error);
+
+      res.status(500).json({
+        message: "Error fetching student attendance"
+      });
+
+    }
+
+  }
+);
+
 
 module.exports = attendance;
