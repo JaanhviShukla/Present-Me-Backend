@@ -59,8 +59,7 @@ attendance.post("/teachers/mark-attendance",tAuth, async (req, res) => {
   }
 });
 
-attendance.get(
-  "/teachers/attendance-status/:classCode",
+attendance.get("/teachers/attendance-status/:classCode",
   tAuth,
   async (req, res) => {
     try {
@@ -98,8 +97,7 @@ attendance.get(
   }
 );
 
-attendance.get(
-  "/teachers/student-attendance/:classCode/:studentId",
+attendance.get("/teachers/student-attendance/:classCode/:studentId",
   
   async (req, res) => {
 
@@ -154,6 +152,50 @@ attendance.get(
 
   }
 );
+
+attendance.patch("/teachers/update-attendance", tAuth, async (req, res) => {
+  try {
+    const { classCode, date, studentId, status } = req.body;
+
+    if (!classCode || !date || !studentId || status === undefined) {
+      return res.status(400).json({ message: "Missing fields" });
+    }
+
+    const existing = await dynamo.send(new GetCommand({
+      TableName: "attendance",
+      Key: { classCode, date }
+    }));
+
+    if (!existing.Item) {
+      return res.status(404).json({ message: "Attendance not found" });
+    }
+
+    let attendanceList = existing.Item.attendance;
+
+    attendanceList = attendanceList.map((item) => {
+      if (item.studentId === studentId) {
+        return { ...item, status };
+      }
+      return item;
+    });
+
+    // 3️⃣ Save updated list
+    await dynamo.send(new PutCommand({
+      TableName: "attendance",
+      Item: {
+        ...existing.Item,
+        attendance: attendanceList,
+        updatedAt: new Date().toISOString(),
+      }
+    }));
+
+    res.json({ message: "Attendance updated successfully" });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error updating attendance" });
+  }
+});
 
 
 module.exports = attendance;
