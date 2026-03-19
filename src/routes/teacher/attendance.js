@@ -100,7 +100,7 @@ attendance.get(
 
 attendance.get(
   "/teachers/student-attendance/:classCode/:studentId",
-  tAuth,
+  
   async (req, res) => {
 
     try {
