@@ -542,7 +542,7 @@ attendance.post("/teachers/enable-attendance", tAuth, async (req, res) => {
 attendance.post("/teachers/disable-attendance", tAuth, async (req, res) => {
   try {
     const { classCode, date } = req.body;
-    const teacherId = req.teacher.teacherId;
+    const teacherId = req.teacherId.teacherId;
 
     if (!classCode || !date) {
       return res.status(400).json({ message: "Missing required fields" });
