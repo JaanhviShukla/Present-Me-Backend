@@ -311,134 +311,6 @@ attendance.get("/teachers/class-attendance/:classCode", tAuth, async (req, res) 
 
 // SMART ATTENDANCE API 
 
-// GET /students/attendance-session/:classCode
-// Returns session info including SSID, enabled flag, alreadyMarked
-attendance.get("/students/attendance-session/:classCode", tAuth, async (req, res) => {
-  try {
-    const { classCode } = req.params;
-    const { date } = req.query;
-    const studentId = req.student.studentId;
-
-    if (!date) {
-      return res.status(400).json({ message: "date query param required" });
-    }
-
-    // 1. Get class to find teacherId
-    const classDoc = await dynamo.send(new GetCommand({
-      TableName: "classes",
-      Key: { classCode }
-    }));
-
-    if (!classDoc.Item) {
-      return res.status(404).json({ message: "Class not found" });
-    }
-
-    const teacherId = classDoc.Item.teacherId;
-
-    // 2. Get attendance session
-    const session = await dynamo.send(new GetCommand({
-      TableName: "attendanceSessions",
-      Key: { sessionId: `${teacherId}_${classCode}` }
-    }));
-
-    if (!session.Item) {
-      return res.status(404).json({ message: "No attendance session found" });
-    }
-
-    // 3. Check if student already marked today
-    const attendanceDoc = await dynamo.send(new GetCommand({
-      TableName: "attendance",
-      Key: { classCode, date }
-    }));
-
-    const attendanceList = attendanceDoc.Item?.attendance ?? [];
-    const studentRecord = attendanceList.find(a => a.studentId === studentId);
-    const alreadyMarked = studentRecord?.status === 1;
-
-    res.json({
-      wifiSSID: session.Item.wifiSSID,      // ← SSID for student to connect
-      enabled: session.Item.enabled,         // ← must be true
-      alreadyMarked,                         // ← already marked today
-      date,
-    });
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-
-// POST /students/mark-smart-attendance
-attendance.post("/students/mark-smart-attendance", studAuth, async (req, res) => {
-  try {
-    const { classCode, date, status } = req.body;
-    const studentId = req.student.studentId;
-
-    if (!classCode || !date || status === undefined) {
-      return res.status(400).json({ message: "Missing fields" });
-    }
-
-    // 1. Check session is still enabled
-    const classDoc = await dynamo.send(new GetCommand({
-      TableName: "classes",
-      Key: { classCode }
-    }));
-
-    const teacherId = classDoc.Item?.teacherId;
-    if (!teacherId) {
-      return res.status(404).json({ message: "Class not found" });
-    }
-
-    const session = await dynamo.send(new GetCommand({
-      TableName: "attendanceSessions",
-      Key: { sessionId: `${teacherId}_${classCode}` }
-    }));
-
-    if (!session.Item || !session.Item.enabled) {
-      return res.status(403).json({ message: "Attendance session is not active" });
-    }
-
-    // 2. Get or create attendance record
-    const existing = await dynamo.send(new GetCommand({
-      TableName: "attendance",
-      Key: { classCode, date }
-    }));
-
-    let attendanceList = existing.Item?.attendance ?? [];
-
-    // Check already marked
-    const alreadyMarked = attendanceList.some(a => a.studentId === studentId && a.status === 1);
-    if (alreadyMarked) {
-      return res.status(409).json({ message: "Attendance already marked" });
-    }
-
-    // 3. Update or add student record
-    const existingIndex = attendanceList.findIndex(a => a.studentId === studentId);
-    if (existingIndex >= 0) {
-      attendanceList[existingIndex].status = 1;
-    } else {
-      attendanceList.push({ studentId, status: 1 });
-    }
-
-    await dynamo.send(new PutCommand({
-      TableName: "attendance",
-      Item: {
-        classCode,
-        date,
-        attendance: attendanceList,
-        updatedAt: new Date().toISOString(),
-      }
-    }));
-
-    res.json({ message: "Attendance marked successfully" });
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
 // POST /teachers/enable-attendance
 attendance.post("/teachers/enable-attendance", tAuth, async (req, res) => {
   try {
@@ -642,13 +514,177 @@ attendance.post("/teachers/disable-attendance", tAuth, async (req, res) => {
 });
 
 
+// GET /students/attendance-session/:classCode
+// Returns session info including SSID, enabled flag, alreadyMarked
+attendance.get("/students/attendance-session/:classCode", tAuth, async (req, res) => {
+  try {
+    const { classCode } = req.params;
+    const { date } = req.query;
+    const studentId = req.student
+
+    if (!date) {
+      return res.status(400).json({ message: "date query param required" });
+    }
+
+    // 1. Get class to find teacherId
+    const classDoc = await dynamo.send(new GetCommand({
+      TableName: "classes",
+      Key: { classCode }
+    }));
+
+    if (!classDoc.Item) {
+      return res.status(404).json({ message: "Class not found" });
+    }
+
+    console.log("📚 Class found:", classDoc);
+    const teacherId = classDoc.Item.createdBy;
+    console.log("👤 Teacher ID:", teacherId);
+
+    // 2. Get attendance session
+    const session = await dynamo.send(new GetCommand({
+      TableName: "attendanceSessions",
+      Key: { sessionId: `${teacherId}_${classCode}` }
+    }));
+
+    if (!session.Item) {
+      return res.status(404).json({ message: "No attendance session found" });
+    }
+
+    // 3. Check if student already marked today
+    const attendanceDoc = await dynamo.send(new GetCommand({
+      TableName: "attendance",
+      Key: { classCode, date }
+    }));
+
+    const attendanceList = attendanceDoc.Item?.attendance ?? [];
+    const studentRecord = attendanceList.find(a => a.studentId === studentId);
+    const alreadyMarked = studentRecord?.status === 1;
+
+    res.json({
+      wifiSSID: session.Item.wifiSSID,      // ← SSID for student to connect
+      enabled: session.Item.enabled,         // ← must be true
+      alreadyMarked,                         // ← already marked today
+      date,
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
+// POST /students/mark-smart-attendance
+attendance.post("/students/mark-smart-attendance", studAuth, async (req, res) => {
+  try {
+    const { classCode, date, status } = req.body;
+    const studentId = req.student.studentId;  // ← fix: get studentId from object
+
+    if (!classCode || !date || status === undefined) {
+      return res.status(400).json({ message: "Missing fields" });
+    }
+
+    // 1. Get class
+    const classDoc = await dynamo.send(new GetCommand({
+      TableName: "classes",
+      Key: { classCode },
+    }));
+
+    if (!classDoc.Item) {
+      return res.status(404).json({ message: "Class not found" });
+    }
+
+    // ← check both createdBy and teacherId
+    const teacherId = classDoc.Item?.createdBy || classDoc.Item?.teacherId;
+
+    if (!teacherId) {
+      return res.status(404).json({ message: "Teacher not found in class" });
+    }
+
+    // 2. Check session is enabled
+    const sessionId = `${teacherId}_${classCode}`;
+
+    const session = await dynamo.send(new GetCommand({
+      TableName: "attendanceSessions",
+      Key: { sessionId },
+    }));
+
+    if (!session.Item) {
+      return res.status(403).json({ message: "No attendance session found" });
+    }
+
+    if (!session.Item.enabled) {
+      return res.status(403).json({ message: "Attendance session is not active" });
+    }
+
+    // 3. Get existing attendance record
+    const existing = await dynamo.send(new GetCommand({
+      TableName: "attendance",
+      Key: { classCode, date },
+    }));
+
+    let attendanceList = existing.Item?.attendance ?? [];
+
+    // 4. Check already marked — prevent duplicate
+    const alreadyMarked = attendanceList.some(
+      (a) => a.studentId === studentId && a.status === 1
+    );
+
+    if (alreadyMarked) {
+      return res.status(409).json({ message: "Attendance already marked" });
+    }
+
+    // 5. Update existing entry OR add new entry
+    const existingIndex = attendanceList.findIndex(
+      (a) => a.studentId === studentId
+    );
+
+    if (existingIndex >= 0) {
+      attendanceList[existingIndex] = {
+        ...attendanceList[existingIndex],
+        status: 1,
+      };
+    } else {
+      attendanceList.push({ studentId, status: 1 });
+    }
+
+    // 6. Save to DynamoDB — matching your DB structure
+    await dynamo.send(new PutCommand({
+      TableName: "attendance",
+      Item: {
+        classCode,
+        date,
+        attendance: attendanceList,
+        createdAt: existing.Item?.createdAt ?? new Date().toISOString(),
+        markedBy: teacherId,
+        updatedAt: new Date().toISOString(),
+      },
+    }));
+
+    res.status(200).json({
+      message: "Attendance marked successfully",
+      studentId,
+      classCode,
+      date,
+      status: 1,
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      message: "Server error",
+      error: err.message,
+      errorName: err.name,
+    });
+  }
+});
+
 
 // GET /teachers/session-status/:classCode
 // Check if session already exists for today
 attendance.get("/teachers/session-status/:classCode", tAuth, async (req, res) => {
   try {
     const { classCode } = req.params;
-    const teacherId = req.teacher.teacherId;
+    const teacherId = req.teacherId.teacherId;
 
     const sessionId = `${teacherId}_${classCode}`;
 
