@@ -1,7 +1,7 @@
 
 const express = require("express");
 const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
-const { DynamoDBDocumentClient, PutCommand, QueryCommand, GetCommand } = require("@aws-sdk/lib-dynamodb");
+const { DynamoDBDocumentClient, PutCommand, QueryCommand, GetCommand, UpdateCommand } = require("@aws-sdk/lib-dynamodb");
 const tAuth = require("../../middlewares/teacherAuth");
 const studAuth = require("../../middlewares/student_auth");
 const client = new DynamoDBClient({ region: "ap-south-1" });
@@ -538,7 +538,6 @@ attendance.post("/teachers/enable-attendance", tAuth, async (req, res) => {
   }
 });
 
-// POST /teachers/disable-attendance
 attendance.post("/teachers/disable-attendance", tAuth, async (req, res) => {
   try {
     const { classCode, date } = req.body;
@@ -549,8 +548,19 @@ attendance.post("/teachers/disable-attendance", tAuth, async (req, res) => {
     }
 
     const sessionId = `${teacherId}_${classCode}`;
+   
 
-    // 1. Disable the session
+    // 1. Check session exists first
+    const sessionDoc = await dynamo.send(new GetCommand({
+      TableName: "attendanceSessions",
+      Key: { sessionId },
+    }));
+
+
+    if (!sessionDoc.Item) {
+      return res.status(404).json({ message: "Session not found" });
+    }
+
     await dynamo.send(new UpdateCommand({
       TableName: "attendanceSessions",
       Key: { sessionId },
@@ -558,34 +568,44 @@ attendance.post("/teachers/disable-attendance", tAuth, async (req, res) => {
       ExpressionAttributeValues: {
         ":false": false,
         ":now": new Date().toISOString(),
-      }
+      },
     }));
+  
 
-    // 2. Get attendance for today
+    // 3. Get attendance for today
+    console.log("📊 Fetching attendance...");
     const attendanceDoc = await dynamo.send(new GetCommand({
       TableName: "attendance",
-      Key: { classCode, date }
+      Key: { classCode, date },
     }));
+    console.log("📊 Attendance:", JSON.stringify(attendanceDoc.Item));
 
-    // 3. Get all students of the class
+    // 4. Get all students of the class
+    console.log("📚 Fetching class students...");
     const classDoc = await dynamo.send(new GetCommand({
       TableName: "classes",
-      Key: { classCode }
+      Key: { classCode },
     }));
+ 
+
+    if (!classDoc.Item) {
+      return res.status(404).json({ message: "Class not found" });
+    }
 
     const allStudents = classDoc.Item?.students ?? [];
     let attendanceList = attendanceDoc.Item?.attendance ?? [];
 
-    // 4. Mark remaining students as absent (who didn't mark present)
+    // 5. Mark remaining students as absent
     const presentIds = attendanceList
-      .filter(a => a.status === 1)
-      .map(a => a.studentId);
+      .filter((a) => a.status === 1)
+      .map((a) => a.studentId);
 
-    const absentIds = allStudents.filter(id => !presentIds.includes(id));
+    const absentIds = allStudents.filter((id) => !presentIds.includes(id));
 
-    // Add absent students who are not in the list yet
-    absentIds.forEach(studentId => {
-      const existingIndex = attendanceList.findIndex(a => a.studentId === studentId);
+    absentIds.forEach((studentId) => {
+      const existingIndex = attendanceList.findIndex(
+        (a) => a.studentId === studentId
+      );
       if (existingIndex >= 0) {
         attendanceList[existingIndex].status = 0;
       } else {
@@ -593,18 +613,19 @@ attendance.post("/teachers/disable-attendance", tAuth, async (req, res) => {
       }
     });
 
-    // 5. Save final attendance
+    // 6. Save final attendance
     await dynamo.send(new PutCommand({
       TableName: "attendance",
       Item: {
         classCode,
         date,
         attendance: attendanceList,
+        createdAt: attendanceDoc.Item?.createdAt ?? new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-      }
+      },
     }));
 
-    res.json({
+    res.status(200).json({
       message: "Attendance session ended",
       totalStudents: allStudents.length,
       presentCount: presentIds.length,
@@ -612,10 +633,14 @@ attendance.post("/teachers/disable-attendance", tAuth, async (req, res) => {
     });
 
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({
+      message: "Server error",
+      error: err.message,    // ← shows real error
+      errorName: err.name,
+    });
   }
 });
+
 
 
 // GET /teachers/session-status/:classCode
