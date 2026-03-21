@@ -516,7 +516,7 @@ attendance.post("/teachers/disable-attendance", tAuth, async (req, res) => {
 
 // GET /students/attendance-session/:classCode
 // Returns session info including SSID, enabled flag, alreadyMarked
-attendance.get("/students/attendance-session/:classCode", tAuth, async (req, res) => {
+attendance.get("/students/attendance-session/:classCode", studAuth, async (req, res) => {
   try {
     const { classCode } = req.params;
     const { date } = req.query;

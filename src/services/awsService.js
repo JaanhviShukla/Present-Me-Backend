@@ -199,10 +199,26 @@ async function updateInstitutionProfile(id,updatefields){
   return result.Attributes;
 }
 
+async function findByEmailId(email, tableName, emailKeyName = "emailId") {
+  // Uses Scan to find student by email
+  // Better: create a GSI on emailId for production
+  const cmd = new ScanCommand({
+    TableName: tableName,
+    FilterExpression: "#email = :email",
+    ExpressionAttributeNames: { "#email": emailKeyName },
+    ExpressionAttributeValues: { ":email": email },
+  });
+  const res = await docClient.send(cmd);
+  return res.Items?.[0] ?? null;
+}
+
+module.exports = { findById, findByEmail };
+
 module.exports = {
   createInstitution,
   findByEmail,
   findById,
+  findByEmailId,
   getPendingInstitutions,
   getVerifiedInstitutions,
   updateInstitutionStatus,
