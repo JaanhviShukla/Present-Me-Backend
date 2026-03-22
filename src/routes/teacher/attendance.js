@@ -715,6 +715,72 @@ attendance.get("/teachers/session-status/:classCode", tAuth, async (req, res) =>
   }
 });
 
+// show live stdent attendance for a session
+// GET /teachers/present-students/:classCode
+attendance.get("/teachers/present-students/:classCode", tAuth, async (req, res) => {
+  try {
+    const { classCode } = req.params;
+    const { date } = req.query;
+
+    if (!date) {
+      return res.status(400).json({ message: "date query param required" });
+    }
+
+    // 1. Get attendance for today
+    const attendanceDoc = await dynamo.send(new GetCommand({
+      TableName: "attendance",
+      Key: { classCode, date },
+    }));
+
+    if (!attendanceDoc.Item) {
+      return res.status(200).json({ students: [] });
+    }
+
+    const attendanceList = attendanceDoc.Item.attendance ?? [];
+
+    // 2. Filter only present (status === 1)
+    const presentIds = attendanceList
+      .filter((a) => a.status === 1)
+      .map((a) => a.studentId);
+
+    if (presentIds.length === 0) {
+      return res.status(200).json({ students: [] });
+    }
+
+    // 3. Fetch each present student's details
+    const studentDetails = await Promise.all(
+      presentIds.map(async (studentId) => {
+        const result = await dynamo.send(new GetCommand({
+          TableName: "students",
+          Key: { studentId },
+        }));
+        return result.Item ?? null;
+      })
+    );
+
+    // 4. Return clean response
+    const students = studentDetails
+      .filter((s) => s !== null)
+      .map((s) => ({
+        studentId:    s.studentId,
+        name:         `${s.firstName || ""} ${s.lastName || ""}`.trim(),
+        firstName:    s.firstName || "",
+        lastName:     s.lastName  || "",
+        rollNo:       s.rollNo    || "N/A",
+        profilePicUrl: s.profilePicUrl || "",
+      }));
+
+    res.status(200).json({ students });
+
+  } catch (err) {
+    console.error("present-students error:", err);
+    res.status(500).json({
+      message: "Server error",
+      error: err.message,
+    });
+  }
+});
+
 
 
 module.exports = attendance;
