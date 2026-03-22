@@ -1,6 +1,6 @@
 // routes/notice.js
 const express = require("express");
-const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
+const { DynamoDBClient, ScanCommand } = require("@aws-sdk/client-dynamodb");
 const {
   DynamoDBDocumentClient,
   PutCommand,
@@ -213,6 +213,7 @@ notice.get("/students/general-notices", studAuth, async (req, res) => {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 });
+
 
 
 // ─── POST /admin/send-general-notice ──────────────────────────────
