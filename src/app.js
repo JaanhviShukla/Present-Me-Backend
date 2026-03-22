@@ -15,10 +15,10 @@ const adminRouter = require("./routes/admin/updateTeacStatus");
 const teacherProfile = require("./routes/teacher/teacherProfile");
 const teacherClass = require("./routes/teacher/teacherCreateClass");
 const studentClass = require("./routes/student/studentClasses");
-
 const app = express();
 const cors = require("cors");
 const attendance = require("./routes/teacher/attendance");
+const notice = require("./routes/teacher/notice");
 
 // Middleware
 app.use(cors(
@@ -44,6 +44,7 @@ app.use("/", teacherProfile);
 app.use("/", teacherClass);
 app.use("/", studentClass);
 app.use("/", attendance);
+app.use("/", notice);
 
 // Mount routes
 // app.use('/api/institutions', institutionRoutes);
