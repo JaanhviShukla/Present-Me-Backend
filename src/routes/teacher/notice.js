@@ -217,7 +217,7 @@ notice.get("/students/general-notices", studAuth, async (req, res) => {
 
 // ─── POST /admin/send-general-notice ──────────────────────────────
 // Admin sends notice to all teachers + students of institution
-notice.post("/admin/send-general-notice", SAuth, async (req, res) => {
+notice.post("/admin/send-general-notice", tAuth, async (req, res) => {
   try {
     const { title, message, priority } = req.body;
     const sender = req.teacherId; // full teacher object
