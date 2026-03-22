@@ -12,10 +12,15 @@ const {
 const tAuth = require("../../middlewares/teacherAuth");
 const studAuth = require("../../middlewares/student_auth");
 const { v4: uuidv4 } = require("uuid");
+const SAuth = require("../../middlewares/s_admin_auth");
 
 const client = new DynamoDBClient({ region: "ap-south-1" });
 const dynamo = DynamoDBDocumentClient.from(client);
 const notice = express.Router();
+
+
+
+
 
 // ─── POST /teachers/send-notice ───────────────────────────────────────
 // Teacher sends a notice to a class
@@ -190,6 +195,245 @@ notice.patch("/teachers/notice/:noticeId", tAuth, async (req, res) => {
   }
 });
 
+// GET /students/general-notices
+notice.get("/students/general-notices", studAuth, async (req, res) => {
+  try {
+    const { ScanCommand } = require("@aws-sdk/lib-dynamodb");
+
+    const result = await dynamo.send(new ScanCommand({
+      TableName: "generalNotices",  // separate table for admin notices
+    }));
+
+    const sorted = (result.Items ?? []).sort((a, b) =>
+      new Date(b.createdAt) - new Date(a.createdAt)
+    );
+
+    res.status(200).json({ notices: sorted });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
+
+
+// ─── POST /admin/send-general-notice ──────────────────────────────
+// Admin sends notice to all teachers + students of institution
+generalNotice.post("/admin/send-general-notice", SAuth, async (req, res) => {
+  try {
+    const { title, message, priority } = req.body;
+    const sender = req.teacherId; // full teacher object
+
+    const institutionId = sender.institutionId;
+    const senderName = `${sender.firstName} ${sender.lastName}`;
+    const senderId = sender.teacherId;
+
+    if (!title || !message) {
+      return res.status(400).json({
+        message: "title and message are required",
+      });
+    }
+
+    if (!institutionId) {
+      return res.status(400).json({
+        message: "institutionId not found in your profile",
+      });
+    }
+
+    const noticeId = uuidv4();
+    const createdAt = new Date().toISOString();
+
+    await dynamo.send(new PutCommand({
+      TableName: "generalNotices",
+      Item: {
+        noticeId,
+        institutionId,
+        senderId,
+        senderName,
+        senderType: "teacher",   // "teacher" or "admin"
+        title: title.trim(),
+        message: message.trim(),
+        priority: priority ?? "normal",
+        createdAt,
+        updatedAt: createdAt,
+      },
+    }));
+
+    res.status(200).json({
+      message: "General notice sent successfully",
+      noticeId,
+      institutionId,
+      title,
+      createdAt,
+    });
+
+  } catch (err) {
+    console.error("send-general-notice error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
+
+
+// ─── GET /teachers/general-notices ────────────────────────────────
+// Teacher fetches all general notices for their institution
+generalNotice.get("/teachers/general-notices", tAuth, async (req, res) => {
+  try {
+    const sender = req.teacherId;
+    const institutionId = sender.institutionId;
+
+    if (!institutionId) {
+      return res.status(400).json({ message: "institutionId not found" });
+    }
+
+    const result = await dynamo.send(new ScanCommand({
+      TableName: "generalNotices",
+      FilterExpression: "institutionId = :inst",
+      ExpressionAttributeValues: { ":inst": institutionId },
+    }));
+
+    const sorted = (result.Items ?? []).sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
+
+    res.status(200).json({
+      notices: sorted,
+      count: sorted.length,
+    });
+
+  } catch (err) {
+    console.error("teacher-general-notices error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
+
+
+// ─── GET /students/general-notices ────────────────────────────────
+// Student fetches all general notices for their institution
+generalNotice.get("/students/general-notices", studAuth, async (req, res) => {
+  try {
+    const student = req.student;
+    const institutionId = student.institutionId;
+
+    if (!institutionId) {
+      return res.status(400).json({ message: "institutionId not found" });
+    }
+
+    const result = await dynamo.send(new ScanCommand({
+      TableName: "generalNotices",
+      FilterExpression: "institutionId = :inst",
+      ExpressionAttributeValues: { ":inst": institutionId },
+    }));
+
+    const sorted = (result.Items ?? []).sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
+
+    res.status(200).json({
+      notices: sorted,
+      count: sorted.length,
+    });
+
+  } catch (err) {
+    console.error("student-general-notices error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
+
+
+// ─── PATCH /teachers/general-notice/:noticeId ─────────────────────
+// Teacher edits their own general notice
+generalNotice.patch("/teachers/general-notice/:noticeId", tAuth, async (req, res) => {
+  try {
+    const { noticeId } = req.params;
+    const { title, message, priority } = req.body;
+    const senderId = req.teacherId.teacherId;
+
+    // Verify ownership
+    const existing = await dynamo.send(new GetCommand({
+      TableName: "generalNotices",
+      Key: { noticeId },
+    }));
+
+    if (!existing.Item) {
+      return res.status(404).json({ message: "Notice not found" });
+    }
+
+    if (existing.Item.senderId !== senderId) {
+      return res.status(403).json({ message: "You can only edit your own notices" });
+    }
+
+    const updateParts = [];
+    const values = { ":now": new Date().toISOString() };
+    const names = {};
+
+    if (title) {
+      updateParts.push("#t = :title");
+      values[":title"] = title.trim();
+      names["#t"] = "title";
+    }
+    if (message) {
+      updateParts.push("#m = :message");
+      values[":message"] = message.trim();
+      names["#m"] = "message";
+    }
+    if (priority) {
+      updateParts.push("#p = :priority");
+      values[":priority"] = priority;
+      names["#p"] = "priority";
+    }
+
+    updateParts.push("updatedAt = :now");
+
+    await dynamo.send(new UpdateCommand({
+      TableName: "generalNotices",
+      Key: { noticeId },
+      UpdateExpression: `SET ${updateParts.join(", ")}`,
+      ExpressionAttributeValues: values,
+      ExpressionAttributeNames: names,
+    }));
+
+    res.status(200).json({ message: "Notice updated successfully" });
+
+  } catch (err) {
+    console.error("update-general-notice error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
+
+
+// ─── DELETE /teachers/general-notice/:noticeId ────────────────────
+// Teacher deletes their own general notice
+generalNotice.delete("/teachers/general-notice/:noticeId", tAuth, async (req, res) => {
+  try {
+    const { noticeId } = req.params;
+    const senderId = req.teacherId.teacherId;
+
+    // Verify ownership
+    const existing = await dynamo.send(new GetCommand({
+      TableName: "generalNotices",
+      Key: { noticeId },
+    }));
+
+    if (!existing.Item) {
+      return res.status(404).json({ message: "Notice not found" });
+    }
+
+    if (existing.Item.senderId !== senderId) {
+      return res.status(403).json({ message: "You can only delete your own notices" });
+    }
+
+    await dynamo.send(new DeleteCommand({
+      TableName: "generalNotices",
+      Key: { noticeId },
+    }));
+
+    res.status(200).json({ message: "Notice deleted successfully" });
+
+  } catch (err) {
+    console.error("delete-general-notice error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
+
+module.exports = generalNotice;
 
 
 module.exports = notice;
