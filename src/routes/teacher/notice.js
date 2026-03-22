@@ -138,4 +138,56 @@ notice.get("/students/notices/:classCode", studAuth, async (req, res) => {
   }
 });
 
+// PATCH /teachers/notice/:noticeId
+notice.patch("/teachers/notice/:noticeId", tAuth, async (req, res) => {
+  try {
+    const { noticeId } = req.params;
+    const { classCode, title, message, priority } = req.body;
+
+    if (!classCode) {
+      return res.status(400).json({ message: "classCode is required in body" });
+    }
+
+    if (!title && !message && !priority) {
+      return res.status(400).json({ message: "Nothing to update" });
+    }
+
+    const updateParts = [];
+    const values = { ":now": new Date().toISOString() };
+    const names = {};
+
+    if (title) {
+      updateParts.push("#t = :title");
+      values[":title"] = title.trim();
+      names["#t"] = "title";
+    }
+    if (message) {
+      updateParts.push("#m = :message");
+      values[":message"] = message.trim();
+      names["#m"] = "message";
+    }
+    if (priority) {
+      updateParts.push("#p = :priority");
+      values[":priority"] = priority;
+      names["#p"] = "priority";
+    }
+
+    updateParts.push("updatedAt = :now");
+
+    await dynamo.send(new UpdateCommand({
+      TableName: "notices",
+      Key: { noticeId, classCode },
+      UpdateExpression: `SET ${updateParts.join(", ")}`,
+      ExpressionAttributeValues: values,
+      ExpressionAttributeNames: names,
+    }));
+
+    res.status(200).json({ message: "Notice updated successfully" });
+
+  } catch (err) {
+    console.error("update-notice error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
+
 module.exports = notice;
