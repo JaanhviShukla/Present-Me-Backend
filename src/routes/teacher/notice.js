@@ -1,7 +1,8 @@
 // routes/notice.js
 const express = require("express");
-const { DynamoDBClient, ScanCommand } = require("@aws-sdk/client-dynamodb");
+const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
 const {
+  ScanCommand,
   DynamoDBDocumentClient,
   PutCommand,
   GetCommand,
