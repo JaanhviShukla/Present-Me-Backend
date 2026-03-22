@@ -744,7 +744,7 @@ attendance.get("/teachers/present-students/:classCode", tAuth, async (req, res) 
       .map((a) => a.studentId);
 
     if (presentIds.length === 0) {
-      return res.status(200).json({ students: [] });
+      return res.status(200).json({ students: []});
     }
 
     // 3. Fetch each present student's details
