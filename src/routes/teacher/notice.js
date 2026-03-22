@@ -348,6 +348,10 @@ notice.patch("/teachers/general-notice/:noticeId", tAuth, async (req, res) => {
     const { title, message, priority } = req.body;
     const senderId = req.teacherId.teacherId;
 
+    if (!title && !message && !priority) {
+      return res.status(400).json({ message: "Nothing to update" });
+    }
+
     // Verify ownership
     const existing = await dynamo.send(new GetCommand({
       TableName: "generalNotices",
@@ -389,14 +393,21 @@ notice.patch("/teachers/general-notice/:noticeId", tAuth, async (req, res) => {
       Key: { noticeId },
       UpdateExpression: `SET ${updateParts.join(", ")}`,
       ExpressionAttributeValues: values,
-      ExpressionAttributeNames: names,
+      // ← only include ExpressionAttributeNames if not empty
+      ...(Object.keys(names).length > 0 && {
+        ExpressionAttributeNames: names,
+      }),
     }));
 
     res.status(200).json({ message: "Notice updated successfully" });
 
   } catch (err) {
     console.error("update-general-notice error:", err);
-    res.status(500).json({ message: "Server error", error: err.message });
+    res.status(500).json({
+      message: "Server error",
+      error: err.message,
+      errorName: err.name,
+    });
   }
 });
 
