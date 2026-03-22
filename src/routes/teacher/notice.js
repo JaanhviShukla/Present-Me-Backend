@@ -217,7 +217,7 @@ notice.get("/students/general-notices", studAuth, async (req, res) => {
 
 // ─── POST /admin/send-general-notice ──────────────────────────────
 // Admin sends notice to all teachers + students of institution
-generalNotice.post("/admin/send-general-notice", SAuth, async (req, res) => {
+notice.post("/admin/send-general-notice", SAuth, async (req, res) => {
   try {
     const { title, message, priority } = req.body;
     const sender = req.teacherId; // full teacher object
@@ -274,7 +274,7 @@ generalNotice.post("/admin/send-general-notice", SAuth, async (req, res) => {
 
 // ─── GET /teachers/general-notices ────────────────────────────────
 // Teacher fetches all general notices for their institution
-generalNotice.get("/teachers/general-notices", tAuth, async (req, res) => {
+notice.get("/teachers/general-notices", tAuth, async (req, res) => {
   try {
     const sender = req.teacherId;
     const institutionId = sender.institutionId;
@@ -307,7 +307,7 @@ generalNotice.get("/teachers/general-notices", tAuth, async (req, res) => {
 
 // ─── GET /students/general-notices ────────────────────────────────
 // Student fetches all general notices for their institution
-generalNotice.get("/students/general-notices", studAuth, async (req, res) => {
+notice.get("/students/general-notices", studAuth, async (req, res) => {
   try {
     const student = req.student;
     const institutionId = student.institutionId;
@@ -340,7 +340,7 @@ generalNotice.get("/students/general-notices", studAuth, async (req, res) => {
 
 // ─── PATCH /teachers/general-notice/:noticeId ─────────────────────
 // Teacher edits their own general notice
-generalNotice.patch("/teachers/general-notice/:noticeId", tAuth, async (req, res) => {
+notice.patch("/teachers/general-notice/:noticeId", tAuth, async (req, res) => {
   try {
     const { noticeId } = req.params;
     const { title, message, priority } = req.body;
@@ -401,7 +401,7 @@ generalNotice.patch("/teachers/general-notice/:noticeId", tAuth, async (req, res
 
 // ─── DELETE /teachers/general-notice/:noticeId ────────────────────
 // Teacher deletes their own general notice
-generalNotice.delete("/teachers/general-notice/:noticeId", tAuth, async (req, res) => {
+notice.delete("/teachers/general-notice/:noticeId", tAuth, async (req, res) => {
   try {
     const { noticeId } = req.params;
     const senderId = req.teacherId.teacherId;
@@ -433,7 +433,7 @@ generalNotice.delete("/teachers/general-notice/:noticeId", tAuth, async (req, re
   }
 });
 
-module.exports = generalNotice;
+
 
 
 module.exports = notice;
